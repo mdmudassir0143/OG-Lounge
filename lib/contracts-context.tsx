@@ -4,7 +4,6 @@ import React, { createContext, useContext, type ReactNode } from 'react';
 import { useAccount, usePublicClient, useWalletClient } from 'wagmi';
 import { parseEther, type Address, type Hash } from 'viem';
 
-// Types
 interface ContractAddresses {
   ownership: Address;
   marketplace: Address;
@@ -32,27 +31,22 @@ interface TokenInfo {
   creator: Address;
 }
 
-// Context Interface
 interface ContractsContextValue {
-  // Connection status
   isConnected: boolean;
   address?: Address;
   
-  // Contract addresses
   contractAddresses: ContractAddresses;
   
-  // GameHub functions
   buyChance: (numberOfChances: number, gameNftID: bigint) => Promise<TransactionResult>;
   withdrawEarnings: () => Promise<TransactionResult>;
   getCreatorEarnings: (creatorAddress: Address) => Promise<bigint>;
   
-  // Marketplace functions
   listItem: (tokenId: bigint, price: bigint) => Promise<TransactionResult>;
   buyItem: (listingId: bigint, price: bigint) => Promise<TransactionResult>;
   cancelListing: (listingId: bigint) => Promise<TransactionResult>;
   getListing: (listingId: bigint) => Promise<Listing>;
   
-  // Ownership functions
+
   mint: (to: Address) => Promise<TransactionResult>;
   ownerOf: (tokenId: bigint) => Promise<Address>;
   balanceOf: (owner: Address) => Promise<bigint>;
@@ -66,7 +60,6 @@ interface ContractsContextValue {
   getApproved: (tokenId: bigint) => Promise<Address>;
 }
 
-// Contract ABIs
 const OWNERSHIP_ABI = [
   {
     type: "function",
@@ -213,23 +206,19 @@ const GAMEHUB_ABI = [
   },
 ] as const;
 
-// Create Context
 const ContractsContext = createContext<ContractsContextValue | undefined>(undefined);
 
-// Contract Addresses (you'll need to update these with your deployed contract addresses)
 const CONTRACT_ADDRESSES: ContractAddresses = {
-  ownership: "0x0000000000000000000000000000000000000000" as Address, // Update with actual address
-  marketplace: "0x0000000000000000000000000000000000000000" as Address, // Update with actual address
-  gameHub: "0x0000000000000000000000000000000000000000" as Address, // Update with actual address
+  ownership: "0x3C3D5A77c8B4ab41f85c12d271815dbafA036fF2" as Address,
+  marketplace: "0xc4A512632e84b15Aa743fe52A48096CaF37605FD" as Address,
+  gameHub: "0x57531aE27f456CB3a8F068DE19BCC0ccC33a458e" as Address
 };
 
-// Provider Component
 export function ContractsProvider({ children }: { children: ReactNode }) {
   const { address, isConnected } = useAccount();
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
 
-  // Helper function to handle transaction errors
   const handleTransactionError = (error: unknown, operation: string): TransactionResult => {
     console.error(`Error ${operation}:`, error);
     return {
@@ -239,7 +228,6 @@ export function ContractsProvider({ children }: { children: ReactNode }) {
     };
   };
 
-  // GameHub Functions
   const buyChance = async (numberOfChances: number, gameNftID: bigint): Promise<TransactionResult> => {
     if (!walletClient || !publicClient) {
       return handleTransactionError(new Error("Wallet not connected"), "buying chance");
@@ -313,7 +301,6 @@ export function ContractsProvider({ children }: { children: ReactNode }) {
     return result as bigint;
   };
 
-  // Marketplace Functions
   const listItem = async (tokenId: bigint, price: bigint): Promise<TransactionResult> => {
     if (!walletClient || !publicClient) {
       return handleTransactionError(new Error("Wallet not connected"), "listing item");
@@ -426,7 +413,6 @@ export function ContractsProvider({ children }: { children: ReactNode }) {
     };
   };
 
-  // Ownership Functions
   const mint = async (to: Address): Promise<TransactionResult> => {
     if (!walletClient || !publicClient) {
       return handleTransactionError(new Error("Wallet not connected"), "minting token");
@@ -655,18 +641,15 @@ export function ContractsProvider({ children }: { children: ReactNode }) {
     address,
     contractAddresses: CONTRACT_ADDRESSES,
     
-    // GameHub functions
     buyChance,
     withdrawEarnings,
     getCreatorEarnings,
     
-    // Marketplace functions
     listItem,
     buyItem,
     cancelListing,
     getListing,
     
-    // Ownership functions
     mint,
     ownerOf,
     balanceOf,
@@ -687,7 +670,6 @@ export function ContractsProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// Custom hook to use the contracts context
 export function useContracts() {
   const context = useContext(ContractsContext);
   if (context === undefined) {
