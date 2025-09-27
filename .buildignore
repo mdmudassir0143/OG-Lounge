@@ -1,0 +1,10 @@
+hardhat/
+*.sol
+*.test.ts
+test/
+tests/
+coverage/
+cache/
+artifacts/
+typechain-types/
+deployments/
