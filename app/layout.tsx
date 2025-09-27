@@ -35,11 +35,12 @@ export default function RootLayout({
           <Background>
             <Navbar
               navItems={[
+                { title: "Home", href: "/" },
+                { title: "About", href: "/about" },
+                { title: "Contact", href: "/contact" },
                 { title: "Games", href: "/games" },
                 { title: "Editor", href: "/editor" },
                 { title: "Market Place", href: "/marketplace" },
-                { title: "Community", href: "/community" },
-                { title: "🏆 Pyth Dashboard", href: "/pyth-dashboard" },
               ]}
             />
             {children}
