@@ -1,26 +1,31 @@
 "use client";
 
-import { Search, Star, Store, TrendingUp } from "lucide-react";
+import { Search, Star, Store, TrendingUp, Filter } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 import { toast } from "sonner";
 import { useAccount } from "wagmi";
 import MarketplaceGameCardSkeleton from "@/components/skeletons/market-skeleton";
+import { MarketplaceNFTCard } from "@/components/marketplace/MarketplaceNFTCard";
 import { Button } from "@/components/ui/button";
 import { GameCard } from "@/components/ui/game-card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { pythPriceService } from "@/lib/pyth-price-service";
 import { PAGE_SIZE } from "@/lib/constants";
 import type { Game } from "@/lib/game-service";
+import type { NFTListing } from "@/lib/marketplace-service";
 
 export default function MarketplacePage() {
   const [games, setGames] = React.useState<Game[]>([]);
+  const [nftListings, setNftListings] = React.useState<NFTListing[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [searchQuery, setSearchQuery] = React.useState("");
   const [page, setPage] = React.useState(1);
   const [ethPrice, setEthPrice] = React.useState<string>("Loading...");
+  const [activeTab, setActiveTab] = React.useState<"nft" | "published">("nft");
 
   const { address: activeAddress } = useAccount();
 
@@ -58,11 +63,12 @@ export default function MarketplacePage() {
     };
   }, []);
   React.useEffect(() => {
-    const loadMarketplaceGames = async () => {
+    const loadMarketplaceData = async () => {
       try {
         setLoading(true);
 
         const params = new URLSearchParams({
+          type: activeTab,
           page: page.toString(),
           limit: "12",
         });
@@ -75,25 +81,44 @@ export default function MarketplacePage() {
         const result = await response.json();
 
         if (result.success) {
-          setGames(result.games);
+          if (activeTab === "nft") {
+            setNftListings(result.listings || []);
+            setGames([]); // Clear games when showing NFTs
+          } else {
+            setGames(result.games || []);
+            setNftListings([]); // Clear NFT listings when showing published games
+          }
         } else {
-          toast.error("Failed to load marketplace games");
+          toast.error("Failed to load marketplace data");
           setGames([]);
+          setNftListings([]);
         }
       } catch {
-        toast.error("Failed to load marketplace games");
+        toast.error("Failed to load marketplace data");
         setGames([]);
+        setNftListings([]);
       } finally {
         setLoading(false);
       }
     };
 
-    loadMarketplaceGames();
-  }, [page, searchQuery]);
+    loadMarketplaceData();
+  }, [page, searchQuery, activeTab]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setPage(1);
+  };
+
+  const handleTabChange = (newTab: string) => {
+    setActiveTab(newTab as "nft" | "published");
+    setPage(1);
+    setSearchQuery("");
+  };
+
+  const refreshListings = () => {
+    // Force refresh by changing a dependency
+    setPage(page);
   };
 
   const handleBuyGame = async (gameId: string, price: number) => {
@@ -221,7 +246,7 @@ export default function MarketplacePage() {
             <Input
               className="pr-4 pl-10"
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search games..."
+              placeholder={`Search ${activeTab === "nft" ? "NFT games" : "published games"}...`}
               type="text"
               value={searchQuery}
             />
@@ -236,50 +261,128 @@ export default function MarketplacePage() {
         </form>
       </div>
 
-      {/* Games Grid */}
-      {games.length === 0 ? (
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-50 to-gray-50 p-12 text-center dark:from-slate-900 dark:to-gray-800">
-          <div className="absolute inset-0 bg-grid-pattern opacity-5" />
-          <div className="relative">
-            <div className="mx-auto mb-6 w-fit rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 p-4">
-              <Store className="h-16 w-16 text-white" />
+      {/* Marketplace Tabs */}
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+        <div className="flex justify-center">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="nft" className="gap-2">
+              <Store className="h-4 w-4" />
+              NFT Marketplace
+            </TabsTrigger>
+            <TabsTrigger value="published" className="gap-2">
+              <Star className="h-4 w-4" />
+              Published Games
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="nft" className="space-y-6">
+          {loading ? (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <MarketplaceGameCardSkeleton
+                  key={`nft-skeleton-${index}`}
+                />
+              ))}
             </div>
-            <h3 className="mb-3 font-bold text-2xl">No games found</h3>
-            <p className="mb-8 text-lg text-muted-foreground">
-              {searchQuery
-                ? "Try a different search term to find amazing games"
-                : "Be the first to publish a game to the marketplace and share your creativity!"}
-            </p>
-            <Link href="/editor">
-              <Button className="gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 px-8 py-3 text-lg hover:from-emerald-700 hover:to-teal-700">
-                <Star className="h-5 w-5" />
-                Create First Game
-              </Button>
-            </Link>
-          </div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {games.map((game) => (
-            <GameCard
-              currentUserAddress={activeAddress ?? undefined}
-              game={game}
-              key={game.gameId}
-              onBuy={handleBuyGame}
-              onShare={(gameId) => {
-                navigator.clipboard.writeText(
-                  `${window.location.origin}/marketplace/${gameId}`
-                );
-                toast.success("Game link copied!");
-              }}
-              variant="marketplace"
-            />
-          ))}
-        </div>
-      )}
+          ) : nftListings.length === 0 ? (
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-50 to-gray-50 p-12 text-center dark:from-slate-900 dark:to-gray-800">
+              <div className="absolute inset-0 bg-grid-pattern opacity-5" />
+              <div className="relative">
+                <div className="mx-auto mb-6 w-fit rounded-full bg-gradient-to-br from-purple-500 to-pink-600 p-4">
+                  <Store className="h-16 w-16 text-white" />
+                </div>
+                <h3 className="mb-3 font-bold text-2xl">No NFT listings found</h3>
+                <p className="mb-8 text-lg text-muted-foreground">
+                  {searchQuery
+                    ? "Try a different search term to find NFT games"
+                    : "No game NFTs are currently listed for sale. Be the first to list yours!"}
+                </p>
+                <Link href="/editor">
+                  <Button className="gap-2 bg-gradient-to-r from-purple-600 to-pink-600 px-8 py-3 text-lg hover:from-purple-700 hover:to-pink-700">
+                    <Store className="h-5 w-5" />
+                    Create & List Your Game
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {nftListings.map((listing) => (
+                listing.game && (
+                  <MarketplaceNFTCard
+                    key={`${listing.listingId.toString()}`}
+                    game={listing.game}
+                    listing={{
+                      seller: listing.seller,
+                      tokenId: listing.tokenId,
+                      price: listing.price,
+                      listedAt: listing.listedAt,
+                    }}
+                    listingId={listing.listingId}
+                    onPurchaseComplete={refreshListings}
+                    onCancelComplete={refreshListings}
+                  />
+                )
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="published" className="space-y-6">
+          {loading ? (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <MarketplaceGameCardSkeleton
+                  key={`published-skeleton-${index}`}
+                />
+              ))}
+            </div>
+          ) : games.length === 0 ? (
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-50 to-gray-50 p-12 text-center dark:from-slate-900 dark:to-gray-800">
+              <div className="absolute inset-0 bg-grid-pattern opacity-5" />
+              <div className="relative">
+                <div className="mx-auto mb-6 w-fit rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 p-4">
+                  <Star className="h-16 w-16 text-white" />
+                </div>
+                <h3 className="mb-3 font-bold text-2xl">No published games found</h3>
+                <p className="mb-8 text-lg text-muted-foreground">
+                  {searchQuery
+                    ? "Try a different search term to find amazing games"
+                    : "Be the first to publish a game to the marketplace and share your creativity!"}
+                </p>
+                <Link href="/editor">
+                  <Button className="gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 px-8 py-3 text-lg hover:from-emerald-700 hover:to-teal-700">
+                    <Star className="h-5 w-5" />
+                    Create First Game
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {games.map((game) => (
+                <GameCard
+                  currentUserAddress={activeAddress ?? undefined}
+                  game={game}
+                  key={game.gameId}
+                  onBuy={handleBuyGame}
+                  onShare={(gameId) => {
+                    navigator.clipboard.writeText(
+                      `${window.location.origin}/marketplace/${gameId}`
+                    );
+                    toast.success("Game link copied!");
+                  }}
+                  variant="marketplace"
+                />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Pagination */}
-      {games.length === PAGE_SIZE && (
+      {((activeTab === "nft" && nftListings.length === 12) || (activeTab === "published" && games.length === PAGE_SIZE)) && (
         <div className="flex justify-center gap-2 pt-6">
           <Button
             className="border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 dark:border-emerald-800 dark:from-emerald-950/20 dark:to-teal-950/20"

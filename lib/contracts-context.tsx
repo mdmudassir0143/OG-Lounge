@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, type ReactNode } from 'react';
+import React, { createContext, useContext, useMemo, type ReactNode } from 'react';
 import { useAccount, usePublicClient, useWalletClient } from 'wagmi';
 import { parseEther, type Address, type Hash } from 'viem';
 
@@ -40,6 +40,13 @@ interface ContractsContextValue {
   buyChance: (numberOfChances: number, gameNftID: bigint) => Promise<TransactionResult>;
   withdrawEarnings: () => Promise<TransactionResult>;
   getCreatorEarnings: (creatorAddress: Address) => Promise<bigint>;
+  createGameNFT: (to: Address, paymentValue?: bigint) => Promise<TransactionResult>;
+  playGame: (tokenId: bigint) => Promise<TransactionResult>;
+  getChancesPlayed: (user: Address, tokenId: bigint) => Promise<bigint>;
+  getRemainingFreeChances: (user: Address, tokenId: bigint) => Promise<bigint>;
+  getBoughtChances: (user: Address, tokenId: bigint) => Promise<bigint>;
+  getUserTokenCount: (user: Address) => Promise<bigint>;
+  getOwnership: () => Promise<Address>;
   
   listItem: (tokenId: bigint, price: bigint) => Promise<TransactionResult>;
   buyItem: (listingId: bigint, price: bigint) => Promise<TransactionResult>;
@@ -180,6 +187,18 @@ const MARKETPLACE_ABI = [
     ],
     stateMutability: "view",
   },
+  {
+    type: "function",
+    name: "listings",
+    inputs: [{ name: "", type: "uint256" }],
+    outputs: [
+      { name: "seller", type: "address" },
+      { name: "tokenId", type: "uint256" },
+      { name: "price", type: "uint256" },
+      { name: "listedAt", type: "uint256" }
+    ],
+    stateMutability: "view",
+  },
 ] as const;
 
 const GAMEHUB_ABI = [
@@ -204,20 +223,89 @@ const GAMEHUB_ABI = [
     outputs: [{ name: "", type: "uint256" }],
     stateMutability: "view",
   },
+  {
+    type: "function",
+    name: "createGameNFT",
+    inputs: [{ name: "to", type: "address" }],
+    outputs: [],
+    stateMutability: "payable",
+  },
+  {
+    type: "function",
+    name: "playGame",
+    inputs: [{ name: "tokenId", type: "uint256" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "getChancesPlayed",
+    inputs: [{ name: "user", type: "address" }, { name: "tokenId", type: "uint256" }],
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getRemainingFreeChances",
+    inputs: [{ name: "user", type: "address" }, { name: "tokenId", type: "uint256" }],
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getBoughtChances",
+    inputs: [{ name: "user", type: "address" }, { name: "tokenId", type: "uint256" }],
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getUserTokenCount",
+    inputs: [{ name: "user", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getOwnership",
+    inputs: [],
+    outputs: [{ name: "", type: "address" }],
+    stateMutability: "view",
+  },
 ] as const;
 
 const ContractsContext = createContext<ContractsContextValue | undefined>(undefined);
 
 const CONTRACT_ADDRESSES: ContractAddresses = {
-  ownership: "0x3C3D5A77c8B4ab41f85c12d271815dbafA036fF2" as Address,
-  marketplace: "0xc4A512632e84b15Aa743fe52A48096CaF37605FD" as Address,
-  gameHub: "0x57531aE27f456CB3a8F068DE19BCC0ccC33a458e" as Address
+  ownership: "0x917c08eDb26F4c471C1A178cB8Ea199798c2e048" as Address,
+  marketplace: "0x8ca7cac81563f9F9A61b11cABFc14742531e82aC" as Address,
+  gameHub: "0x1f9cf04d3A09D1Ce329D247aC27d55CA45a761A5" as Address
 };
 
 export function ContractsProvider({ children }: { children: ReactNode }) {
   const { address, isConnected } = useAccount();
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
+
+  // Initialize contract instances once with useMemo
+  const contracts = useMemo(() => {
+    if (!publicClient) return null;
+
+    return {
+      ownership: {
+        address: CONTRACT_ADDRESSES.ownership,
+        abi: OWNERSHIP_ABI,
+      },
+      marketplace: {
+        address: CONTRACT_ADDRESSES.marketplace,
+        abi: MARKETPLACE_ABI,
+      },
+      gameHub: {
+        address: CONTRACT_ADDRESSES.gameHub,
+        abi: GAMEHUB_ABI,
+      },
+    };
+  }, [publicClient]);
 
   const handleTransactionError = (error: unknown, operation: string): TransactionResult => {
     console.error(`Error ${operation}:`, error);
@@ -229,16 +317,15 @@ export function ContractsProvider({ children }: { children: ReactNode }) {
   };
 
   const buyChance = async (numberOfChances: number, gameNftID: bigint): Promise<TransactionResult> => {
-    if (!walletClient || !publicClient) {
-      return handleTransactionError(new Error("Wallet not connected"), "buying chance");
+    if (!walletClient || !contracts || !publicClient) {
+      return handleTransactionError(new Error("Wallet not connected or contracts not initialized"), "buying chance");
     }
 
     try {
       const value = parseEther((0.01 * numberOfChances).toString());
       
       const { request } = await publicClient.simulateContract({
-        address: CONTRACT_ADDRESSES.gameHub,
-        abi: GAMEHUB_ABI,
+        ...contracts.gameHub,
         functionName: "buyChance",
         args: [BigInt(numberOfChances), gameNftID],
         value,
@@ -260,14 +347,13 @@ export function ContractsProvider({ children }: { children: ReactNode }) {
   };
 
   const withdrawEarnings = async (): Promise<TransactionResult> => {
-    if (!walletClient || !publicClient) {
-      return handleTransactionError(new Error("Wallet not connected"), "withdrawing earnings");
+    if (!walletClient || !contracts || !publicClient) {
+      return handleTransactionError(new Error("Wallet not connected or contracts not initialized"), "withdrawing earnings");
     }
 
     try {
       const { request } = await publicClient.simulateContract({
-        address: CONTRACT_ADDRESSES.gameHub,
-        abi: GAMEHUB_ABI,
+        ...contracts.gameHub,
         functionName: "withdrawEarnings",
         account: walletClient.account!,
       });
@@ -287,13 +373,12 @@ export function ContractsProvider({ children }: { children: ReactNode }) {
   };
 
   const getCreatorEarnings = async (creatorAddress: Address): Promise<bigint> => {
-    if (!publicClient) {
-      throw new Error("Public client not available");
+    if (!contracts || !publicClient) {
+      throw new Error("Contracts not initialized");
     }
 
     const result = await publicClient.readContract({
-      address: CONTRACT_ADDRESSES.gameHub,
-      abi: GAMEHUB_ABI,
+      ...contracts.gameHub,
       functionName: "creatorEarnings",
       args: [creatorAddress],
     });
@@ -301,15 +386,145 @@ export function ContractsProvider({ children }: { children: ReactNode }) {
     return result as bigint;
   };
 
-  const listItem = async (tokenId: bigint, price: bigint): Promise<TransactionResult> => {
-    if (!walletClient || !publicClient) {
-      return handleTransactionError(new Error("Wallet not connected"), "listing item");
+  const createGameNFT = async (to: Address, paymentValue?: bigint): Promise<TransactionResult> => {
+    if (!walletClient || !contracts || !publicClient) {
+      return handleTransactionError(new Error("Wallet not connected or contracts not initialized"), "creating game NFT");
+    }
+
+    try {
+      // If no payment value is provided, check user's token count to determine if payment is needed
+      let value = paymentValue;
+      if (value === undefined) {
+        const tokenCount = await getUserTokenCount(to);
+        value = tokenCount >= BigInt(2) ? parseEther("0.5") : BigInt(0);
+      }
+
+      const { request } = await publicClient.simulateContract({
+        ...contracts.gameHub,
+        functionName: "createGameNFT",
+        args: [to],
+        value,
+        account: walletClient.account!,
+      });
+
+      const hash = await walletClient.writeContract(request);
+      const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      
+      return {
+        hash,
+        blockNumber: receipt.blockNumber,
+        gasUsed: receipt.gasUsed,
+        success: receipt.status === "success",
+      };
+    } catch (error) {
+      return handleTransactionError(error, "creating game NFT");
+    }
+  };
+
+  const playGame = async (tokenId: bigint): Promise<TransactionResult> => {
+    if (!walletClient || !contracts || !publicClient) {
+      return handleTransactionError(new Error("Wallet not connected or contracts not initialized"), "playing game");
     }
 
     try {
       const { request } = await publicClient.simulateContract({
-        address: CONTRACT_ADDRESSES.marketplace,
-        abi: MARKETPLACE_ABI,
+        ...contracts.gameHub,
+        functionName: "playGame",
+        args: [tokenId],
+        account: walletClient.account!,
+      });
+
+      const hash = await walletClient.writeContract(request);
+      const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      
+      return {
+        hash,
+        blockNumber: receipt.blockNumber,
+        gasUsed: receipt.gasUsed,
+        success: receipt.status === "success",
+      };
+    } catch (error) {
+      return handleTransactionError(error, "playing game");
+    }
+  };
+
+  const getChancesPlayed = async (user: Address, tokenId: bigint): Promise<bigint> => {
+    if (!contracts || !publicClient) {
+      throw new Error("Contracts not initialized");
+    }
+
+    const result = await publicClient.readContract({
+      ...contracts.gameHub,
+      functionName: "getChancesPlayed",
+      args: [user, tokenId],
+    });
+    
+    return result as bigint;
+  };
+
+  const getOwnership = async (): Promise<Address> => {
+    if (!contracts || !publicClient) {
+      throw new Error("Contracts not initialized");
+    }
+
+    const result = await publicClient.readContract({
+      ...contracts.gameHub,
+      functionName: "getOwnership",
+    });
+    
+    return result as Address;
+  };
+
+  const getRemainingFreeChances = async (user: Address, tokenId: bigint): Promise<bigint> => {
+    if (!contracts || !publicClient) {
+      throw new Error("Contracts not initialized");
+    }
+
+    const result = await publicClient.readContract({
+      ...contracts.gameHub,
+      functionName: "getRemainingFreeChances",
+      args: [user, tokenId],
+    });
+    
+    return result as bigint;
+  };
+
+  const getBoughtChances = async (user: Address, tokenId: bigint): Promise<bigint> => {
+    if (!contracts || !publicClient) {
+      throw new Error("Contracts not initialized");
+    }
+
+    const result = await publicClient.readContract({
+      ...contracts.gameHub,
+      functionName: "getBoughtChances",
+      args: [user, tokenId],
+    });
+    
+    return result as bigint;
+  };
+
+  const getUserTokenCount = async (user: Address): Promise<bigint> => {
+    if (!contracts || !publicClient) {
+      throw new Error("Contracts not initialized");
+    }
+
+    const result = await publicClient.readContract({
+      ...contracts.gameHub,
+      functionName: "getUserTokenCount",
+      args: [user],
+    });
+    
+    return result as bigint;
+  };
+
+  const listItem = async (tokenId: bigint, price: bigint): Promise<TransactionResult> => {
+    if (!walletClient || !contracts || !publicClient) {
+      return handleTransactionError(new Error("Wallet not connected or contracts not initialized"), "listing item");
+    }
+
+    try {
+      const { request } = await publicClient.simulateContract({
+        ...contracts.marketplace,
         functionName: "listItem",
         args: [tokenId, price],
         account: walletClient.account!,
@@ -330,14 +545,13 @@ export function ContractsProvider({ children }: { children: ReactNode }) {
   };
 
   const buyItem = async (listingId: bigint, price: bigint): Promise<TransactionResult> => {
-    if (!walletClient || !publicClient) {
-      return handleTransactionError(new Error("Wallet not connected"), "buying item");
+    if (!walletClient || !contracts || !publicClient) {
+      return handleTransactionError(new Error("Wallet not connected or contracts not initialized"), "buying item");
     }
 
     try {
       const { request } = await publicClient.simulateContract({
-        address: CONTRACT_ADDRESSES.marketplace,
-        abi: MARKETPLACE_ABI,
+        ...contracts.marketplace,
         functionName: "buyItem",
         args: [listingId],
         value: price,
@@ -359,14 +573,13 @@ export function ContractsProvider({ children }: { children: ReactNode }) {
   };
 
   const cancelListing = async (listingId: bigint): Promise<TransactionResult> => {
-    if (!walletClient || !publicClient) {
-      return handleTransactionError(new Error("Wallet not connected"), "cancelling listing");
+    if (!walletClient || !contracts || !publicClient) {
+      return handleTransactionError(new Error("Wallet not connected or contracts not initialized"), "cancelling listing");
     }
 
     try {
       const { request } = await publicClient.simulateContract({
-        address: CONTRACT_ADDRESSES.marketplace,
-        abi: MARKETPLACE_ABI,
+        ...contracts.marketplace,
         functionName: "cancelListing",
         args: [listingId],
         account: walletClient.account!,
@@ -387,13 +600,12 @@ export function ContractsProvider({ children }: { children: ReactNode }) {
   };
 
   const getListing = async (listingId: bigint): Promise<Listing> => {
-    if (!publicClient) {
-      throw new Error("Public client not available");
+    if (!contracts || !publicClient) {
+      throw new Error("Contracts not initialized");
     }
 
     const result = await publicClient.readContract({
-      address: CONTRACT_ADDRESSES.marketplace,
-      abi: MARKETPLACE_ABI,
+      ...contracts.marketplace,
       functionName: "getListing",
       args: [listingId],
     });
@@ -414,14 +626,13 @@ export function ContractsProvider({ children }: { children: ReactNode }) {
   };
 
   const mint = async (to: Address): Promise<TransactionResult> => {
-    if (!walletClient || !publicClient) {
-      return handleTransactionError(new Error("Wallet not connected"), "minting token");
+    if (!walletClient || !contracts || !publicClient) {
+      return handleTransactionError(new Error("Wallet not connected or contracts not initialized"), "minting token");
     }
 
     try {
       const { request } = await publicClient.simulateContract({
-        address: CONTRACT_ADDRESSES.ownership,
-        abi: OWNERSHIP_ABI,
+        ...contracts.ownership,
         functionName: "mint",
         args: [to],
         account: walletClient.account!,
@@ -442,13 +653,12 @@ export function ContractsProvider({ children }: { children: ReactNode }) {
   };
 
   const ownerOf = async (tokenId: bigint): Promise<Address> => {
-    if (!publicClient) {
-      throw new Error("Public client not available");
+    if (!contracts || !publicClient) {
+      throw new Error("Contracts not initialized");
     }
 
     const result = await publicClient.readContract({
-      address: CONTRACT_ADDRESSES.ownership,
-      abi: OWNERSHIP_ABI,
+      ...contracts.ownership,
       functionName: "ownerOf",
       args: [tokenId],
     });
@@ -457,13 +667,12 @@ export function ContractsProvider({ children }: { children: ReactNode }) {
   };
 
   const balanceOf = async (owner: Address): Promise<bigint> => {
-    if (!publicClient) {
-      throw new Error("Public client not available");
+    if (!contracts || !publicClient) {
+      throw new Error("Contracts not initialized");
     }
 
     const result = await publicClient.readContract({
-      address: CONTRACT_ADDRESSES.ownership,
-      abi: OWNERSHIP_ABI,
+      ...contracts.ownership,
       functionName: "balanceOf",
       args: [owner],
     });
@@ -472,13 +681,12 @@ export function ContractsProvider({ children }: { children: ReactNode }) {
   };
 
   const totalMinted = async (): Promise<bigint> => {
-    if (!publicClient) {
-      throw new Error("Public client not available");
+    if (!contracts || !publicClient) {
+      throw new Error("Contracts not initialized");
     }
 
     const result = await publicClient.readContract({
-      address: CONTRACT_ADDRESSES.ownership,
-      abi: OWNERSHIP_ABI,
+      ...contracts.ownership,
       functionName: "totalMinted",
     });
     
@@ -486,13 +694,12 @@ export function ContractsProvider({ children }: { children: ReactNode }) {
   };
 
   const tokensOfOwner = async (owner: Address): Promise<bigint[]> => {
-    if (!publicClient) {
-      throw new Error("Public client not available");
+    if (!contracts || !publicClient) {
+      throw new Error("Contracts not initialized");
     }
 
     const result = await publicClient.readContract({
-      address: CONTRACT_ADDRESSES.ownership,
-      abi: OWNERSHIP_ABI,
+      ...contracts.ownership,
       functionName: "tokensOfOwner",
       args: [owner],
     });
@@ -501,14 +708,13 @@ export function ContractsProvider({ children }: { children: ReactNode }) {
   };
 
   const approve = async (to: Address, tokenId: bigint): Promise<TransactionResult> => {
-    if (!walletClient || !publicClient) {
-      return handleTransactionError(new Error("Wallet not connected"), "approving token");
+    if (!walletClient || !contracts || !publicClient) {
+      return handleTransactionError(new Error("Wallet not connected or contracts not initialized"), "approving token");
     }
 
     try {
       const { request } = await publicClient.simulateContract({
-        address: CONTRACT_ADDRESSES.ownership,
-        abi: OWNERSHIP_ABI,
+        ...contracts.ownership,
         functionName: "approve",
         args: [to, tokenId],
         account: walletClient.account!,
@@ -529,14 +735,13 @@ export function ContractsProvider({ children }: { children: ReactNode }) {
   };
 
   const setApprovalForAll = async (operator: Address, approved: boolean): Promise<TransactionResult> => {
-    if (!walletClient || !publicClient) {
-      return handleTransactionError(new Error("Wallet not connected"), "setting approval for all");
+    if (!walletClient || !contracts || !publicClient) {
+      return handleTransactionError(new Error("Wallet not connected or contracts not initialized"), "setting approval for all");
     }
 
     try {
       const { request } = await publicClient.simulateContract({
-        address: CONTRACT_ADDRESSES.ownership,
-        abi: OWNERSHIP_ABI,
+        ...contracts.ownership,
         functionName: "setApprovalForAll",
         args: [operator, approved],
         account: walletClient.account!,
@@ -557,14 +762,13 @@ export function ContractsProvider({ children }: { children: ReactNode }) {
   };
 
   const transferFrom = async (from: Address, to: Address, tokenId: bigint): Promise<TransactionResult> => {
-    if (!walletClient || !publicClient) {
-      return handleTransactionError(new Error("Wallet not connected"), "transferring token");
+    if (!walletClient || !contracts || !publicClient) {
+      return handleTransactionError(new Error("Wallet not connected or contracts not initialized"), "transferring token");
     }
 
     try {
       const { request } = await publicClient.simulateContract({
-        address: CONTRACT_ADDRESSES.ownership,
-        abi: OWNERSHIP_ABI,
+        ...contracts.ownership,
         functionName: "transferFrom",
         args: [from, to, tokenId],
         account: walletClient.account!,
@@ -585,13 +789,12 @@ export function ContractsProvider({ children }: { children: ReactNode }) {
   };
 
   const isApprovedForAll = async (owner: Address, operator: Address): Promise<boolean> => {
-    if (!publicClient) {
-      throw new Error("Public client not available");
+    if (!contracts || !publicClient) {
+      throw new Error("Contracts not initialized");
     }
 
     const result = await publicClient.readContract({
-      address: CONTRACT_ADDRESSES.ownership,
-      abi: OWNERSHIP_ABI,
+      ...contracts.ownership,
       functionName: "isApprovedForAll",
       args: [owner, operator],
     });
@@ -600,13 +803,12 @@ export function ContractsProvider({ children }: { children: ReactNode }) {
   };
 
   const getApproved = async (tokenId: bigint): Promise<Address> => {
-    if (!publicClient) {
-      throw new Error("Public client not available");
+    if (!contracts || !publicClient) {
+      throw new Error("Contracts not initialized");
     }
 
     const result = await publicClient.readContract({
-      address: CONTRACT_ADDRESSES.ownership,
-      abi: OWNERSHIP_ABI,
+      ...contracts.ownership,
       functionName: "getApproved",
       args: [tokenId],
     });
@@ -615,15 +817,14 @@ export function ContractsProvider({ children }: { children: ReactNode }) {
   };
 
   const getTokenInfo = async (tokenId: bigint): Promise<TokenInfo> => {
-    if (!publicClient) {
-      throw new Error("Public client not available");
+    if (!contracts || !publicClient) {
+      throw new Error("Contracts not initialized");
     }
 
     const [owner, creator] = await Promise.all([
       ownerOf(tokenId),
       publicClient.readContract({
-        address: CONTRACT_ADDRESSES.ownership,
-        abi: OWNERSHIP_ABI,
+        ...contracts.ownership,
         functionName: "creators",
         args: [tokenId],
       }),
@@ -644,6 +845,13 @@ export function ContractsProvider({ children }: { children: ReactNode }) {
     buyChance,
     withdrawEarnings,
     getCreatorEarnings,
+    createGameNFT,
+    playGame,
+    getChancesPlayed,
+    getRemainingFreeChances,
+    getBoughtChances,
+    getUserTokenCount,
+    getOwnership,
     
     listItem,
     buyItem,

@@ -7,14 +7,20 @@ import { useAccount } from "wagmi";
 import { CodeEditor } from "@/components/canvas-forge/CodeEditor";
 import { Header } from "@/components/canvas-forge/Header";
 import { Preview } from "@/components/canvas-forge/Preview";
+import { WithdrawEarningsDialog } from "@/components/canvas-forge/WithdrawEarningsDialog";
+import { ListNFTDialog } from "@/components/marketplace/ListNFTDialog";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import type { Game } from "@/lib/game-service";
 import type { GenerateGameCodeOutput } from "@/types/ai-sdk";
+import { useGameHub } from "@/hooks/use-game-hub";
+import { useMarketplace } from "@/hooks/use-marketplace";
+import { Wallet, Store } from "lucide-react";
 
 const defaultHtml = `<!DOCTYPE html>
 <html lang="en">
@@ -93,6 +99,9 @@ export default function GameEditor() {
   const [isGameGenerated, setIsGameGenerated] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
   const { address: walletAddress } = useAccount();
+  const { mintGameToken, isMinting } = useGameHub();
+  const { isApprovedForAll } = useMarketplace();
+  const [isMarketplaceApproved, setIsMarketplaceApproved] = React.useState(false);
 
   const loadGame = React.useCallback(
     async (id: string) => {
@@ -127,6 +136,22 @@ export default function GameEditor() {
     }
   }, [gameId, isNewGame, loadGame]);
 
+  // Check marketplace approval when game is loaded
+  React.useEffect(() => {
+    const checkMarketplaceApproval = async () => {
+      if (walletAddress && currentGame?.tokenId) {
+        try {
+          const approved = await isApprovedForAll(walletAddress);
+          setIsMarketplaceApproved(approved);
+        } catch (error) {
+          console.error('Failed to check marketplace approval:', error);
+        }
+      }
+    };
+
+    checkMarketplaceApproval();
+  }, [walletAddress, currentGame?.tokenId, isApprovedForAll]);
+
   const handleGenerate = (output: GenerateGameCodeOutput) => {
     setHtml(output.html);
     setIsGameGenerated(true);
@@ -143,6 +168,7 @@ export default function GameEditor() {
     description: string;
     tags: string[];
     walletAddress: string;
+    tokenId?: string;
   }) => {
     const response = await fetch("/api/games/save", {
       method: "POST",
@@ -167,6 +193,21 @@ export default function GameEditor() {
 
     setIsSaving(true);
     try {
+      let tokenId: bigint | undefined;
+      
+      // For new games, mint an NFT first
+      if (!currentGameId) {
+        toast.info("Minting NFT for your game...");
+        const mintResult = await mintGameToken(walletAddress);
+        
+        if (!mintResult.success) {
+          throw new Error(mintResult.error || "Failed to mint game NFT");
+        }
+        
+        tokenId = mintResult.tokenId;
+        toast.success("Game NFT minted successfully!");
+      }
+
       const result = await saveGameRequest({
         gameId: currentGameId,
         html,
@@ -174,6 +215,7 @@ export default function GameEditor() {
         description: `Generated game - ${new Date().toLocaleDateString()}`,
         tags: ["ai-generated", "canvas-forge"],
         walletAddress,
+        tokenId: tokenId?.toString(),
       });
 
       if (!result.success) {
@@ -323,6 +365,50 @@ export default function GameEditor() {
 
   return (
     <div className="flex h-[calc(100vh-64px)] flex-col bg-[#0a0a0a]">
+      {/* Withdraw Earnings Button - Fixed position */}
+      {walletAddress && (
+        <div className="absolute top-4 right-4 z-50 flex gap-2">
+          <WithdrawEarningsDialog>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 bg-green-600/10 border-green-600/20 hover:bg-green-600/20 text-green-600 hover:text-green-500"
+            >
+              <Wallet className="h-4 w-4" />
+              Withdraw Earnings
+            </Button>
+          </WithdrawEarningsDialog>
+          
+          {/* List NFT Button - Only show if game has tokenId */}
+          {currentGame?.tokenId && (
+            <ListNFTDialog
+              tokenId={currentGame.tokenId}
+              gameTitle={currentGame.title}
+              isApproved={isMarketplaceApproved}
+              onApprovalNeeded={() => {
+                // Refresh approval status
+                if (walletAddress) {
+                  isApprovedForAll(walletAddress).then(setIsMarketplaceApproved);
+                }
+              }}
+              onListingComplete={() => {
+                // Optional: Show success message or redirect
+                toast.success('Your game is now listed on the marketplace!');
+              }}
+            >
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 bg-purple-600/10 border-purple-600/20 hover:bg-purple-600/20 text-purple-600 hover:text-purple-500"
+              >
+                <Store className="h-4 w-4" />
+                List on Marketplace
+              </Button>
+            </ListNFTDialog>
+          )}
+        </div>
+      )}
+
       {/* Main Editor */}
       <div className="flex-1">
         <ResizablePanelGroup className="h-full" direction="horizontal">
@@ -365,7 +451,7 @@ export default function GameEditor() {
                   isPublishedToMarketplace={
                     currentGame?.isPublishedToMarketplace
                   }
-                  isSaving={isSaving}
+                  isSaving={isSaving || isMinting}
                   onGenerate={handleGenerate}
                   onPublishMarketplace={handlePublishToMarketplace}
                   onSave={handleSave}

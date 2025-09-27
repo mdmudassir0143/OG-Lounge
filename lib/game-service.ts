@@ -29,6 +29,7 @@ export type Game = {
   title: string;
   description?: string;
   tags?: string[];
+  tokenId?: bigint; // NFT token ID from GameHub contract
   currentVersion: number;
   versions: GameVersion[];
   isPublishedToMarketplace: boolean;
@@ -68,6 +69,7 @@ class GameService {
     title: string;
     description?: string;
     tags?: string[];
+    tokenId?: bigint;
     isPublishedToMarketplace?: boolean;
     isPublishedToCommunity?: boolean;
     originalGameId?: string;

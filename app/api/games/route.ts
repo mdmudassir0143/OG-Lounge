@@ -5,10 +5,29 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const walletAddress = searchParams.get("wallet");
+    const gameId = searchParams.get("gameId");
 
+    // If gameId is provided, fetch a specific game
+    if (gameId) {
+      const game = await gameService.getGameById(gameId);
+      
+      if (!game) {
+        return NextResponse.json(
+          { error: "Game not found" },
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        games: [game],
+      });
+    }
+
+    // Otherwise, fetch games by wallet address
     if (!walletAddress) {
       return NextResponse.json(
-        { error: "Wallet address is required" },
+        { error: "Wallet address or game ID is required" },
         { status: 400 }
       );
     }

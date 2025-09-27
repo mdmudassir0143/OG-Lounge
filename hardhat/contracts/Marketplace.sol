@@ -20,7 +20,6 @@ contract Marketplace is ReentrancyGuard, Ownable {
     uint256 private listingCounter;
     address public immutable i_nftContract;
 
-    // Events
     event ItemListed(
         uint256 listingId,
         address indexed seller,
@@ -29,7 +28,7 @@ contract Marketplace is ReentrancyGuard, Ownable {
     );
 
     event ItemSold(
-        uint256 indexed _listingId,
+        uint256 indexed listingId,
         address indexed buyer,
         address indexed seller,
         uint256 tokenId,
@@ -81,7 +80,6 @@ contract Marketplace is ReentrancyGuard, Ownable {
 
         emit ItemSold(listingId, msg.sender, listing.seller, listing.tokenId, listing.price);
 
-        // Refund excess payment
         if (msg.value > listing.price) {
             payable(msg.sender).transfer(msg.value - listing.price);
         }

@@ -38,7 +38,7 @@ contract Ownership is
         _;
     }
 
-    function mint(address to) external nonReentrant onlyAuthorized {
+    function mint(address to) external nonReentrant onlyAuthorized returns(uint256) {
 
         uint256 tokenId = _tokenIdCounter;
         _tokenIdCounter++;
@@ -47,6 +47,7 @@ contract Ownership is
         _safeMint(to, tokenId);
 
         emit TokenMinted(tokenId, to);
+        return tokenId;
 
     }
 

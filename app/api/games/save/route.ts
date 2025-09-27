@@ -321,18 +321,21 @@ async function createFlow({
   description,
   tags,
   walletAddress,
+  tokenId,
 }: {
   html: string;
   title: string;
   description?: string;
   tags?: string[];
   walletAddress: string;
+  tokenId?: bigint;
 }) {
   const game = await gameService.createGame({
     walletAddress,
     title,
     description,
     tags,
+    tokenId,
   });
 
   const ipfsResult = await uploadToIPFS(html, title, walletAddress);
@@ -358,7 +361,7 @@ async function createFlow({
 
 export async function POST(request: NextRequest) {
   try {
-    const { html, title, description, tags, walletAddress, gameId } =
+    const { html, title, description, tags, walletAddress, gameId, tokenId } =
       await request.json();
 
     if (!(html && title && walletAddress)) {
@@ -388,6 +391,7 @@ export async function POST(request: NextRequest) {
       description,
       tags,
       walletAddress,
+      tokenId: tokenId ? BigInt(tokenId) : undefined,
     });
   } catch (error) {
     return NextResponse.json(
