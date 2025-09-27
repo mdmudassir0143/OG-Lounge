@@ -172,6 +172,7 @@ Ready for mainnet deployment and mass adoption
 
 ---
 
+
 ## 🎉 Competition Statement
 
 *"This GameMarketplace represents the future of NFT pricing - where real-time market intelligence meets gaming innovation. By leveraging Pyth Network's advanced oracle infrastructure, we've created not just a marketplace, but a new paradigm for digital asset valuation. This is more than a submission; it's a revolution."*
