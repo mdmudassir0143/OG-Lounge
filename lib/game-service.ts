@@ -44,6 +44,24 @@ export type Game = {
   listedForSaleAt?: Date;
   purchasedAt?: Date;
   previousOwner?: string;
+  // Blockchain integration fields
+  blockchainGameId?: number; // The numeric ID used on the smart contract
+  isOnBlockchain?: boolean; // Whether this game exists on the blockchain
+  blockchainListedAt?: Date; // When it was listed on blockchain
+  
+  // NFT-specific fields
+  isNFT?: boolean;
+  nftData?: {
+    tokenId: string;
+    contractAddress: string;
+    transactionHash?: string;
+    encryptedMetadataURI: string;
+    metadataHash: string;
+    priceUSD: number;
+    royaltyPercentage: number;
+    networkName: string;
+    mintedAt: Date;
+  };
   createdAt: Date;
   updatedAt: Date;
 };
@@ -72,6 +90,18 @@ class GameService {
     isPublishedToCommunity?: boolean;
     originalGameId?: string;
     originalOwner?: string;
+    isNFT?: boolean;
+    nftData?: {
+      tokenId: string;
+      contractAddress: string;
+      transactionHash?: string;
+      encryptedMetadataURI: string;
+      metadataHash: string;
+      priceUSD: number;
+      royaltyPercentage: number;
+      networkName: string;
+      mintedAt: Date;
+    };
   }): Promise<Game> {
     const gameId = `game_${Date.now()}_${Math.random().toString(VERSION_ID_RANDOM_LENGTH).substring(VERSION_ID_RANDOM_START, VERSION_ID_RANDOM_END)}`;
 
@@ -85,6 +115,8 @@ class GameService {
       isPublishedToMarketplace: gameData.isPublishedToMarketplace ?? false,
       isPublishedToCommunity: gameData.isPublishedToCommunity ?? false,
       originalOwner: gameData.originalOwner,
+      isNFT: gameData.isNFT ?? false,
+      nftData: gameData.nftData,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -411,6 +443,69 @@ class GameService {
       .deleteMany({ gameId });
 
     return deleteResult.deletedCount > 0;
+  }
+
+  // Update game with blockchain information
+  async updateGameBlockchainInfo(gameId: string, blockchainInfo: {
+    blockchainGameId: number;
+    isOnBlockchain: boolean;
+    blockchainListedAt: Date;
+    isForSale?: boolean;
+    salePrice?: number;
+    listedForSaleAt?: Date;
+  }): Promise<void> {
+    await this.db()
+      .collection<Game>("games")
+      .updateOne(
+        { gameId },
+        { 
+          $set: {
+            ...blockchainInfo,
+            updatedAt: new Date()
+          }
+        }
+      );
+  }
+
+  // Get game by blockchain game ID
+  async getGameByBlockchainId(blockchainGameId: number): Promise<Game | null> {
+    return this.db()
+      .collection<Game>("games")
+      .findOne({ blockchainGameId });
+  }
+
+  // Update game for sale (regular marketplace)
+  async updateGameForSale(gameId: string, priceUSD: number): Promise<void> {
+    await this.db()
+      .collection<Game>("games")
+      .updateOne(
+        { gameId },
+        { 
+          $set: {
+            isForSale: true,
+            salePrice: priceUSD,
+            listedForSaleAt: new Date(),
+            updatedAt: new Date()
+          }
+        }
+      );
+  }
+
+  // Remove game from sale
+  async removeGameFromSale(gameId: string): Promise<void> {
+    await this.db()
+      .collection<Game>("games")
+      .updateOne(
+        { gameId },
+        { 
+          $set: {
+            isForSale: false,
+            salePrice: undefined,
+            listedForSaleAt: undefined,
+            updatedAt: new Date()
+          }
+        }
+      );
   }
 }
 

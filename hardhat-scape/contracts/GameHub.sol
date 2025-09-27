@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import "../src/Ownership.sol";
+import "./Ownership.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 contract GameHub is ReentrancyGuard {

@@ -1,14 +1,19 @@
 import type { HardhatUserConfig } from "hardhat/config";
 
-import hardhatToolboxMochaEthersPlugin from "@nomicfoundation/hardhat-toolbox-mocha-ethers";
+import hardhatToolboxViemPlugin from "@nomicfoundation/hardhat-toolbox-viem";
+import hardhatVerifyPlugin from "@nomicfoundation/hardhat-verify";
+import hardhatKeystorePlugin from "@nomicfoundation/hardhat-keystore";
 import { configVariable } from "hardhat/config";
-import dotenv from "dotenv";
+import * as dotenv from "dotenv";
 
-// Load environment variables
 dotenv.config();
 
 const config: HardhatUserConfig = {
-  plugins: [hardhatToolboxMochaEthersPlugin],
+  plugins: [
+    hardhatToolboxViemPlugin,
+    hardhatVerifyPlugin,
+    hardhatKeystorePlugin,
+  ],
   solidity: {
     profiles: {
       default: {
@@ -48,18 +53,16 @@ const config: HardhatUserConfig = {
       url: process.env.SEPOLIA_RPC_URL || "https://sepolia.drpc.org",
       accounts: process.env.WALLET_PRIVATE_KEY ? [process.env.WALLET_PRIVATE_KEY] : [],
     },
-    "0g-testnet": {
-      type: "http",
-      chainType: "l1",
-      url: "https://evmrpc-testnet.0g.ai",
-      chainId: 16602,
-      accounts: process.env.WALLET_PRIVATE_KEY ? [process.env.WALLET_PRIVATE_KEY] : [],
-  },
     mainnet: {
       type: "http",
       chainType: "l1",
       url: process.env.MAINNET_RPC_URL || "https://ethereum.drpc.org",
-      accounts: process.env.WALLET_PRIVATE_KEY ? [process.env.WALLET_PRIVATE_KEY] : [],
+      accounts: process.env.MAINNET_PRIVATE_KEY ? [process.env.MAINNET_PRIVATE_KEY] : [],
+    },
+  },
+  verify: {
+    etherscan: {
+      apiKey: process.env.ETHERSCAN_API_KEY || "",
     },
   },
 };
