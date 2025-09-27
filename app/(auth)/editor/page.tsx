@@ -1,6 +1,6 @@
 "use client";
 
-import { Code, Plus, ShoppingCart, Star } from "lucide-react";
+import { Code, Plus, ShoppingCart, Star, Shield } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 import { toast } from "sonner";

@@ -92,6 +92,8 @@ export default function GameEditor() {
   const [isLoading, setIsLoading] = React.useState<boolean>(!isNewGame);
   const [isGameGenerated, setIsGameGenerated] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
+  const [isNFTSaved, setIsNFTSaved] = React.useState(false);
+  const [nftTokenId, setNftTokenId] = React.useState<string | undefined>();
   const { address: walletAddress } = useAccount();
 
   const loadGame = React.useCallback(
@@ -110,6 +112,12 @@ export default function GameEditor() {
             setIsGameGenerated(true);
             setCurrentGameId(game.gameId);
             setCurrentGame(game); // Store the full game data
+            
+            // Check if this is an NFT game
+            if (game.isNFT && game.nftData) {
+              setIsNFTSaved(true);
+              setNftTokenId(game.nftData.tokenId);
+            }
           }
         }
       } catch {
@@ -230,6 +238,25 @@ export default function GameEditor() {
     }
   };
 
+  const handleEncryptedNFTSuccess = async (tokenId: string, gameId?: string) => {
+    console.log("NFT Success:", { tokenId, gameId });
+    
+    setIsNFTSaved(true);
+    setNftTokenId(tokenId);
+    
+    if (gameId) {
+      setCurrentGameId(gameId);
+      // Update URL to reflect the new game ID
+      router.replace(`/editor/${gameId}`);
+      // Reload the game data to get the NFT information
+      await loadGame(gameId);
+    }
+
+    toast.success("🎉 Game converted to NFT!", {
+      description: "Your game is now a secure, tradeable NFT with encrypted code storage."
+    });
+  };
+
   const handlePublishToMarketplace = async () => {
     if (!currentGameId) {
       toast.error("Please save your game first");
@@ -317,6 +344,84 @@ export default function GameEditor() {
   //   }
   // };
 
+  const handleSellGame = async (price: number) => {
+    if (!currentGameId) {
+      toast.error("Please save your game first");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/games/sell", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          gameId: currentGameId,
+          walletAddress,
+          price,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success("Game listed for sale!", {
+          description: `Your game is now available for $${price} USD (payable in ETH)`,
+        });
+        // Reload game data to update sale status
+        if (currentGameId) {
+          loadGame(currentGameId);
+        }
+      } else {
+        throw new Error(result.error || "Failed to list game");
+      }
+    } catch (error) {
+      toast.error("Failed to list game for sale", {
+        description:
+          error instanceof Error ? error.message : "Please try again later.",
+      });
+    }
+  };
+
+  const handleRemoveFromSale = async () => {
+    if (!currentGameId) {
+      toast.error("Please save your game first");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/games/sell", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          gameId: currentGameId,
+          walletAddress,
+          action: "remove",
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success("Game removed from sale!");
+        // Reload game data to update sale status
+        if (currentGameId) {
+          loadGame(currentGameId);
+        }
+      } else {
+        throw new Error(result.error || "Failed to remove from sale");
+      }
+    } catch (error) {
+      toast.error("Failed to remove game from sale", {
+        description:
+          error instanceof Error ? error.message : "Please try again later.",
+      });
+    }
+  };
+
   const srcDoc = React.useMemo(() => {
     return html;
   }, [html]);
@@ -365,14 +470,21 @@ export default function GameEditor() {
                   isPublishedToMarketplace={
                     currentGame?.isPublishedToMarketplace
                   }
-                  isSaving={isSaving}
                   onGenerate={handleGenerate}
                   onPublishMarketplace={handlePublishToMarketplace}
-                  onSave={handleSave}
                   onTitleChange={(t) => setTitle(t)}
                   onUnpublish={handleUnpublish}
+                  onEncryptedNFTSuccess={handleEncryptedNFTSuccess}
                   showPublishButtons={!!currentGameId}
+                  showSellButton={!!currentGameId && !isNFTSaved}
                   title={title}
+                  gameId={currentGameId}
+                  currentGamePrice={currentGame?.salePrice}
+                  isGameForSale={currentGame?.isForSale}
+                  onSellGame={handleSellGame}
+                  onRemoveFromSale={handleRemoveFromSale}
+                  isNFTSaved={isNFTSaved}
+                  nftTokenId={nftTokenId}
                 />
               )}
             </div>
