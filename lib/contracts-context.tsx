@@ -322,7 +322,7 @@ export function ContractsProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const value = parseEther((0.01 * numberOfChances).toString());
+      const value = parseEther((0.0001 * numberOfChances).toString());
       
       const { request } = await publicClient.simulateContract({
         ...contracts.gameHub,
@@ -396,7 +396,7 @@ export function ContractsProvider({ children }: { children: ReactNode }) {
       let value = paymentValue;
       if (value === undefined) {
         const tokenCount = await getUserTokenCount(to);
-        value = tokenCount >= BigInt(2) ? parseEther("0.5") : BigInt(0);
+        value = tokenCount >= BigInt(2) ? parseEther("0.0005") : BigInt(0);
       }
 
       const { request } = await publicClient.simulateContract({

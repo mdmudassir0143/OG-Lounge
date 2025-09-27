@@ -46,7 +46,7 @@ export function useGameHub(): UseGameHubResult {
     try {
       // Check current token count to determine if payment is required
       const currentCount = await contracts.getUserTokenCount(walletAddress);
-      const paymentValue = currentCount >= BigInt(2) ? BigInt("500000000000000000") : BigInt(0); // 0.5 ETH if user has 2+ tokens
+      const paymentValue = currentCount >= BigInt(2) ? BigInt("500000000000000") : BigInt(0); // 0.0005 ETH if user has 2+ tokens
       
       const result = await contracts.createGameNFT(walletAddress, paymentValue);
       

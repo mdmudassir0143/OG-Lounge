@@ -203,7 +203,7 @@ export default function UserGamePage() {
 
   const latestVersion = game.versions.at(-1);
   const totalChances = freeChances + boughtChances;
-  const pricePerChance = 0.01; // 0.01 ETH per chance
+  const pricePerChance = 0.0001; // 0.0001 ETH per chance
   const totalCost = pricePerChance * chancesToBuy;
 
   return (
@@ -345,7 +345,7 @@ export default function UserGamePage() {
                         Buy More Chances
                       </DialogTitle>
                       <DialogDescription>
-                        Purchase additional chances to continue playing. Each chance costs 0.01 ETH.
+                        Purchase additional chances to continue playing. Each chance costs 0.0001 ETH.
                       </DialogDescription>
                     </DialogHeader>
 
@@ -365,7 +365,7 @@ export default function UserGamePage() {
                       <div className="rounded-lg bg-muted p-4">
                         <div className="flex justify-between text-sm">
                           <span>Cost per chance:</span>
-                          <span className="font-medium">0.01 ETH</span>
+                          <span className="font-medium">0.0001 ETH</span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span>Quantity:</span>
