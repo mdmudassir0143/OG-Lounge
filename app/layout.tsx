@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Game Hub",
+  title: "OG-Lounge",
   description: "A hub for all your gaming needs",
 };
 
@@ -35,9 +35,6 @@ export default function RootLayout({
           <Background>
             <Navbar
               navItems={[
-                { title: "Home", href: "/" },
-                { title: "About", href: "/about" },
-                { title: "Contact", href: "/contact" },
                 { title: "Games", href: "/games" },
                 { title: "Editor", href: "/editor" },
                 { title: "Market Place", href: "/marketplace" },

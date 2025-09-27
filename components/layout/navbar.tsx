@@ -14,7 +14,7 @@ export function Navbar({
         {/* Logo - Left */}
         <div className="flex items-center">
           <Link className="items-center space-x-2 md:flex" href="/">
-            <span className="inline-block font-bold font-mono">Game Hub</span>
+            <span className="inline-block font-bold font-mono">OG-Lounge</span>
           </Link>
         </div>
 

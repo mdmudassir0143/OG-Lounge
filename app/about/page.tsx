@@ -25,7 +25,7 @@ export default function AboutPage() {
               The Future of Gaming is Decentralized
             </h1>
             <p className="mb-8 text-muted-foreground text-xl leading-relaxed md:text-2xl">
-              Game Hub uses{" "}
+              OG-Lounge uses{" "}
               <span className="font-semibold text-gray-800 dark:text-gray-200">
                 blockchain
               </span>{" "}
@@ -106,7 +106,7 @@ export default function AboutPage() {
               title="Revenue Sharing"
             />
             <FeatureCard
-              description="Vote on platform decisions and shape the future of Game Hub together."
+              description="Vote on platform decisions and shape the future of OG-Lounge together."
               gradientColor="#f3f4f6"
               icon={Users}
               iconColor="text-blue-500"

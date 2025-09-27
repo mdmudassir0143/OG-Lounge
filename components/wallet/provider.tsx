@@ -32,7 +32,7 @@ const zeroGTestnet = defineChain({
 });
 
 const config = getDefaultConfig({
-  appName: "Game Hub",
+  appName: "OG-Lounge",
   projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "b1f870b60e5370b358de2f8b0d6b686a",
   chains: [zeroGTestnet, mainnet, sepolia],
   ssr: true, // If your dApp uses server side rendering (SSR)
