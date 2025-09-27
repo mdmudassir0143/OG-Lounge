@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { simpleRandomnessService } from "@/lib/simple-randomness-service";
 
 // SVG Components (reused from original)
 const RockIcon = () => (
@@ -428,6 +431,9 @@ export default function RockPaperScissorsGame() {
     ties: 0,
   });
 
+  // On-chain randomness toggle
+  const [useOnChainRandom, setUseOnChainRandom] = useState(false);
+
   const getWinner = (player: Choice, computer: Choice): GameResult => {
     if (player === computer) {
       return "tie";
@@ -467,8 +473,23 @@ export default function RockPaperScissorsGame() {
     const RESULT_DELAY = 1000;
 
     // Animate computer choice selection
-    setTimeout(() => {
-      const aiChoice = choices[Math.floor(Math.random() * choices.length)];
+    setTimeout(async () => {
+      let aiChoice: Choice;
+
+      if (useOnChainRandom) {
+        // Use on-chain randomness
+        try {
+          const randomNum = await simpleRandomnessService.getRandomChoice();
+          aiChoice = simpleRandomnessService.numberToChoice(randomNum);
+        } catch (error) {
+          console.error('On-chain randomness failed, falling back to Math.random:', error);
+          aiChoice = choices[Math.floor(Math.random() * choices.length)];
+        }
+      } else {
+        // Use original Math.random
+        aiChoice = choices[Math.floor(Math.random() * choices.length)];
+      }
+
       const gameResult = getWinner(selectedChoice, aiChoice);
 
       setComputerChoice(aiChoice);
@@ -675,11 +696,43 @@ export default function RockPaperScissorsGame() {
             </div>
           </Card>
 
+          {/* On-chain Randomness Toggle */}
+          <Card className="mb-6 p-4">
+            <div className="flex items-center justify-center space-x-3">
+              <Label htmlFor="onchain-random" className="text-sm font-medium">
+                Use Blockchain Randomness
+              </Label>
+              <Switch
+                id="onchain-random"
+                checked={useOnChainRandom}
+                onCheckedChange={setUseOnChainRandom}
+              />
+              {useOnChainRandom && (
+                <span className="text-xs text-green-600 dark:text-green-400">
+                  🔗 On-chain
+                </span>
+              )}
+              {!useOnChainRandom && (
+                <span className="text-xs text-muted-foreground">
+                  🎲 Standard
+                </span>
+              )}
+            </div>
+            {useOnChainRandom && (
+              <p className="mt-2 text-center text-xs text-muted-foreground">
+                AI choices are generated using Ethereum blockchain data for verifiable randomness
+              </p>
+            )}
+          </Card>
+
           <div className="mb-8 text-center">
             <h2 className={`font-bold text-2xl ${getResultColor()}`}>
               {getResultMessage()}
             </h2>
-            {isAnimating && (
+            {isAnimating && useOnChainRandom && (
+              <p className="mt-2 text-muted-foreground">AI is consulting the blockchain...</p>
+            )}
+            {isAnimating && !useOnChainRandom && (
               <p className="mt-2 text-muted-foreground">AI is thinking...</p>
             )}
           </div>
