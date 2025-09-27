@@ -88,11 +88,15 @@ contract Marketplace is ReentrancyGuard, Ownable {
     function cancelListing(uint256 _listingId) external nonReentrant {
         Listing storage listing = listings[_listingId];
         require(listing.seller == msg.sender, "Not the seller");
-
+        require(listing.seller != address(0), "Listing does not exist");
+        
+        delete listings[_listingId];
         emit ListingCancelled(_listingId);
     }
 
     function getListing(uint256 _listingId) external view returns (Listing memory) {
         return listings[_listingId];
     }
+
+    
 }

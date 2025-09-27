@@ -20,7 +20,7 @@ contract GameHub is ReentrancyGuard {
         uint256 userTokenCount = getUserTokenCount(to);
         
         if (userTokenCount >= 2) {
-            require(msg.value == 0.5 ether, "Must pay 0.5 ETH to mint additional tokens after owning 2");
+            require(msg.value == 0.0005 ether, "Must pay 0.0005 ETH to mint additional tokens after owning 2");
         } else {
             require(msg.value == 0, "No payment required for first 2 tokens");
         }
@@ -52,7 +52,7 @@ contract GameHub is ReentrancyGuard {
     function buyChance(uint256 _numberOfchancesToBuy, uint256 _gameNftID) external payable {
         require(_numberOfchancesToBuy > 0, "Must buy at least one chance");
         require(_gameNftID < Ownership(i_nftContract).totalMinted(), "Invalid gameNftId");
-        require(msg.value == 0.01 ether * _numberOfchancesToBuy, "Incorrect Ether value sent");
+        require(msg.value == 0.0001 ether * _numberOfchancesToBuy, "Incorrect Ether value sent");
 
         address creator = Ownership(i_nftContract).ownerOf(_gameNftID);
         require(creator != address(0), "Creator is address 0");
@@ -61,7 +61,6 @@ contract GameHub is ReentrancyGuard {
         
         userToChances[msg.sender][_gameNftID] += _numberOfchancesToBuy;
     }
-
 
 
     function withdrawEarnings() external nonReentrant {
