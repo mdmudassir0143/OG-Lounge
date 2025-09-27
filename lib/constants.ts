@@ -13,6 +13,10 @@ export const WALLET_ADDRESS_PREFIX_LENGTH = 6;
 export const WALLET_ADDRESS_SUFFIX_LENGTH = 4;
 export const MAX_TAGS_DISPLAY = 3;
 export const SANITIZED_TITLE_MAX_LENGTH = 100;
+
+// Blockchain Constants
+export const GAME_MARKETPLACE_ADDRESS = "0xDb0E0812bBf50eC0Ffe434b634cC4a0503edCfaa"; // Latest deployment
+export const PYTH_CONTRACT_ADDRESS = "0x4305FB66699C3B2702D4d05CF36551390A4c69C6"; // Sepolia testnet
 export const IPFS_UPLOAD_TIMEOUT_MS = 60_000;
 export const BYTES_PER_MEGABYTE = 1_048_576;
 export const MAX_HTML_SIZE_MB = 50;
