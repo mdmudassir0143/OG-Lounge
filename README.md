@@ -1,392 +1,163 @@
-# 🎮 Gamie - AI-Powered Blockchain Game Platform
+````markdown
+# 🎮 OG-Lounge – AI-Powered On-Chain Game Platform  
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
-[![Ethereum](https://img.shields.io/badge/Ethereum-3C3C3D?style=for-the-badge&logo=ethereum&logoColor=white)](https://ethereum.org/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
-[![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+**OG-Lounge** is a revolutionary blockchain-powered platform where anyone can **create, own, and trade AI-generated games** as **iNFTs**. Powered by **OG Blockchain, Pyth Entropy, and IPFS**, OG-Lounge ensures decentralized ownership, provable fairness, and permanent storage.  
 
-**Gamie** is a revolutionary blockchain-powered game platform that combines AI-generated game development with decentralized ownership and IPFS storage. Create, publish, and trade HTML5 games with wallet authentication on the Ethereum blockchain.
+## 🌟 Features  
 
-## 🌟 Features
+### 🤖 AI-Powered Game Creation  
+- **Prompt-to-Game:* Describe your idea → get complete HTML5 game code from AI  
+- **Smart Refinement:** Iteratively improve mechanics and assets with Gemini AI  
+- **Playable Prototypes:** Games auto-wrapped in a safe HTML5 canvas shell  
 
-### 🤖 AI-Powered Game Generation
-- **Intelligent Code Generation**: Describe your game idea and let AI generate complete HTML5 game code instantly
-- **Iterative Refinement**: Refine and improve games through AI-powered iterations
-- **Multiple Game Templates**: Support for various game genres and mechanics
+### 🔗 Blockchain & Ownership  
+- **OG Blockchain Integration:** Fast, EVM-compatible chain for minting iNFTs  
+- **Decentralized Ownership:** Every game minted as an **iNFT** 
+- **On-Chain Fairness:** **Pyth Entropy** brings verifiable randomness into game logic  
+- **Wallet Auth:** Seamless access via **Rainbow Wallet** + Wagmi hooks  
 
-### 🔗 Blockchain Integration
-- **Ethereum Wallet Authentication**: Secure ownership using MetaMask and other Web3 wallets
-- **Decentralized Storage**: All games stored on IPFS via Pinata for permanent availability
-- **Smart Contract Ready**: Built for future tokenization and NFT integration
+### 🏪 Marketplace & Trading  
+- **Game Marketplace:** List, buy, and sell AI-generated iNFT games   
+- **Fork & Resell:** Build on existing games and publish new versions  
 
-### 🏪 Marketplace & Community
-- **Game Marketplace**: Buy, sell, and trade games with other developers
-- **Community Hub**: Share games for collaboration and forking
-- **Version Control**: Track game versions with IPFS-backed history
+### 🛠️ Developer & Creator Tools  
+- **Monaco Code Editor:** Edit game code directly in the browser  
+- **Live Preview:** Test games instantly before minting  
+- **Fork & Collaborate:** Remix community games via IPFS-based versioning  
+- **One-Click Publishing:** Deploy to marketplace or keep private  
 
-### 🛠️ Developer Tools
-- **Monaco Code Editor**: Full-featured in-browser code editor
-- **Real-time Preview**: Live preview of games during development
-- **Fork & Collaborate**: Fork community games and build upon them
-- **Publishing System**: Publish to marketplace or community with one click
+---
 
-## 🏗️ Architecture Overview
+## 🏗️ Architecture Overview  
 
-### Frontend Stack
-- **Next.js 15** with App Router for server-side rendering and routing
-- **React 19** for component-based UI development
-- **TypeScript** for type-safe development
-- **TailwindCSS** for responsive styling
-- **Shadcn/ui** for consistent component library
+### Frontend Stack  
+- **Next.js 15** + **TypeScript**  
+- **React 19** + **TailwindCSS** + **Shadcn/ui** for UI/UX  
+- **Wagmi** + **Rainbow Wallet** for Web3 authentication  
 
-### Blockchain & Web3
-- **Wagmi** for Ethereum wallet integration
-- **Viem** for low-level Ethereum interactions
-- **Support for Ethereum Mainnet and Sepolia testnet**
+### Blockchain & Web3  
+- **OG Blockchain** for iNFTs & marketplace contracts  
+- **Pyth Entropy** for on-chain randomness  
+- **Beam** serverless functions to orchestrate AI + contract calls  
 
-### AI & Code Generation
-- **Google AI (Genkit)** for intelligent code generation
-- **OpenAI integration** for advanced AI capabilities
-- **Custom prompts** for game-specific code generation
+### AI & Game Generation  
+- **Google Gemini API** for text-to-code & asset generation  
+- **Prompt Templates** ensure valid, playable outputs  
 
-### Backend & Storage
-- **MongoDB** for game metadata and user data
-- **IPFS (Pinata)** for decentralized file storage
-- **Next.js API Routes** for serverless backend functionality
+### Backend & Storage  
+- **MongoDB** for game metadata, indexing, and off-chain analytics  
+- **IPFS (Pinata)** for decentralized and permanent asset storage  
 
-## 🚀 Getting Started
 
-### Prerequisites
-- **Node.js** 18.0 or later
-- **pnpm** package manager
-- **MongoDB** database
-- **Pinata IPFS** account
-- **Google AI API** key
+## 🚀 Getting Started  
 
-### Installation
+### Prerequisites  
+- **Node.js** 18+  
+- **pnpm** package manager  
+- **MongoDB** instance  
+- **Pinata IPFS** account  
+- **Google Gemini API Key**  
+- **OG Blockchain Wallet** (Rainbow recommended)  
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/Prathamesh-chougale-17/gamie.git
-   cd gamie
-   ```
+### Installation  
 
-2. **Install dependencies**
-   ```bash
-   pnpm install
-   ```
+```bash
+git clone https://github.com/your-org/og-lounge.git
+cd og-lounge
+pnpm install
+````
 
-3. **Environment Setup**
-   Create a `.env.local` file in the root directory:
-   ```env
-   # Database
-   MONGODB_URI=mongodb://localhost:27017/game-hub
+Add environment variables in `.env.local`:
 
-   # AI Services
-   GOOGLE_GENAI_API_KEY=your_google_ai_key
-   OPENAI_API_KEY=your_openai_key
+```env
+MONGODB_URI=mongodb://localhost:27017/og-lounge
+GOOGLE_GENAI_API_KEY=your_gemini_api_key
+PINATA_JWT=your_pinata_jwt_token
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
 
-   # IPFS Storage
-   PINATA_JWT=your_pinata_jwt_token
+Run development server:
 
-   # App Configuration
-   NEXT_PUBLIC_APP_URL=http://localhost:3000
-   ```
+```bash
+pnpm dev
+```
 
-4. **Development Server**
-   ```bash
-   pnpm dev
-   ```
+Visit [http://localhost:3000](http://localhost:3000).
 
-   Open [http://localhost:3000](http://localhost:3000) in your browser.
+---
 
 ## 🔄 Application Flow
 
 ```mermaid
-graph TD
     A[User Connects Wallet] --> B{Authenticated?}
-    B -->|Yes| C[Access Dashboard]
-    B -->|No| D[Wallet Connection Required]
+    B -->|Yes| C[Dashboard]
+    B -->|No| D[Connect Rainbow Wallet]
     
     C --> E[Choose Action]
-    E --> F[Create New Game]
-    E --> G[Browse Marketplace]
-    E --> H[Community Games]
-    E --> I[My Games]
+    E --> F[Generate New Game]
+    E --> G[Marketplace]
+    E --> H[My Games]
     
-    F --> J[AI Game Generator]
-    J --> K[Generate Game Code]
-    K --> L[Edit in Monaco Editor]
-    L --> M[Save to IPFS]
-    M --> N[Store in MongoDB]
+    F --> I[Gemini AI Generator]
+    I --> J[Playable Game Code]
+    J --> K[Pin to IPFS]
+    K --> L[Mint iNFT on OG]
     
-    N --> O[Publish Decision]
-    O --> P[Marketplace - For Sale]
-    O --> Q[Community - Open Source]
-    O --> R[Private - Draft]
+    L --> M[Marketplace Listing]
+    M --> N[Buy/Sell/Trade]
     
-    G --> S[Browse Published Games]
-    S --> T[Purchase Game]
-    T --> U[Transfer Ownership]
-    
-    H --> V[Fork Community Game]
-    V --> W[Create New Version]
-    W --> L
-    
-    I --> X[Manage Owned Games]
-    X --> Y[Edit Existing]
-    X --> Z[Delete Game]
-    Y --> L
+    G --> O[Browse iNFT Games]
+    O --> P[Purchase or Fork]
+    P --> Q[Own/Forked iNFT]
 ```
 
-## 📁 Project Structure
-
-```
-gamie/
-├── app/                          # Next.js App Router
-│   ├── (auth)/                   # Protected routes
-│   │   ├── layout.tsx            # Authentication wrapper
-│   │   ├── editor/               # Game editor pages
-│   │   │   ├── page.tsx          # Editor dashboard
-│   │   │   └── [id]/page.tsx     # Individual game editor
-│   │   ├── marketplace/          # Marketplace pages
-│   │   │   ├── page.tsx          # Marketplace listing
-│   │   │   └── [id]/page.tsx     # Individual game page
-│   │   ├── community/            # Community pages
-│   │   │   ├── page.tsx          # Community listing
-│   │   │   └── [id]/page.tsx     # Community game page
-│   │   └── games/                # Game categories
-│   ├── api/                      # API Routes
-│   │   ├── games/                # Game management
-│   │   │   ├── route.ts          # CRUD operations
-│   │   │   ├── save/route.ts     # Save game data
-│   │   │   ├── delete/route.ts   # Delete games
-│   │   │   ├── fork/route.ts     # Fork games
-│   │   │   ├── publish/route.ts  # Publish to marketplace/community
-│   │   │   └── unpublish/route.ts# Unpublish games
-│   │   ├── marketplace/route.ts  # Marketplace API
-│   │   └── community/route.ts    # Community API
-│   ├── globals.css               # Global styles
-│   ├── layout.tsx                # Root layout with providers
-│   └── page.tsx                  # Landing page
-├── components/                   # React components
-│   ├── canvas-forge/             # Game editor components
-│   │   ├── CodeEditor.tsx        # Monaco editor wrapper
-│   │   ├── Preview.tsx           # Game preview
-│   │   ├── EnhancedGameGeneratorDialog.tsx # AI generator
-│   │   └── Header.tsx            # Editor header
-│   ├── wallet/                   # Wallet integration
-│   │   ├── provider.tsx          # Wagmi provider setup
-│   │   ├── connect-button.tsx    # Wallet connection
-│   │   ├── chain-dropdown.tsx    # Network selector
-│   │   ├── balance.tsx           # Balance display
-│   │   └── auth-layout.tsx       # Authentication wrapper
-│   ├── layout/                   # Layout components
-│   │   ├── navbar.tsx            # Navigation bar
-│   │   └── mobile-nav.tsx        # Mobile navigation
-│   └── ui/                       # Shadcn UI components
-├── lib/                          # Utility libraries
-│   ├── game-service.ts           # Game business logic
-│   ├── mongodb.ts                # Database connection
-│   ├── utils.ts                  # Common utilities
-│   └── constants.ts              # App constants
-├── ai/                           # AI integration
-│   ├── flows/                    # AI workflows
-│   │   ├── generate-game-code.ts # Game generation flow
-│   │   └── refine-prompt-flow.ts # Prompt refinement
-│   ├── genkit.ts                 # AI configuration
-│   └── config.ts                 # AI settings
-└── types/                        # TypeScript definitions
-    └── ai-sdk.ts                 # AI type definitions
-```
+---
 
 ## 🗄️ Database Schema
 
 ### Games Collection
-```typescript
+
+```ts
 type Game = {
   _id?: string;
-  gameId: string;              // Unique game identifier
-  walletAddress: string;       // Owner's wallet address
-  title: string;               // Game title
-  description?: string;        // Game description
-  tags?: string[];            // Game tags
-  currentVersion: number;      // Current version number
-  latestVersionHtml: string;   // Latest game code
-  ipfsCid: string;            // IPFS content identifier
-  ipfsUrl: string;            // IPFS access URL
-  isPublishedToMarketplace: boolean;
-  isPublishedToCommunity: boolean;
-  marketplacePublishedAt?: Date;
-  communityPublishedAt?: Date;
+  gameId: string;
+  owner: string;              // Wallet address
+  title: string;
+  description?: string;
+  tags?: string[];
+  ipfsCid: string;
+  ipfsUrl: string;
   isForSale?: boolean;
-  salePrice?: number;
-  originalGameId?: string;     // For forked games
-  originalOwner?: string;      // Original creator
+  price?: number;
   createdAt: Date;
   updatedAt: Date;
 };
 ```
 
-### Game Versions Collection
-```typescript
-type GameVersion = {
-  _id?: string;
-  versionId: string;           // Version identifier
-  gameId: string;              // Parent game ID
-  version: number;             // Version number
-  html: string;                // Game code
-  title: string;               // Version title
-  description?: string;        // Version description
-  ipfsCid: string;            // IPFS storage
-  ipfsUrl: string;            // IPFS URL
-  createdAt: Date;
-  updatedAt: Date;
-};
-```
+# Contract Deployment Details
 
-## 🌐 API Endpoints
-
-### Game Management
-- `GET /api/games?wallet=address` - Get games by wallet
-- `POST /api/games/save` - Save game data
-- `POST /api/games/delete` - Delete game
-- `POST /api/games/fork` - Fork existing game
-- `POST /api/games/publish` - Publish to marketplace/community
-- `POST /api/games/unpublish` - Remove from marketplace/community
-
-### Marketplace
-- `GET /api/marketplace` - Get marketplace games
-- `GET /api/marketplace/[id]` - Get specific marketplace game
-- `POST /api/games/buy` - Purchase game
-
-### Community
-- `GET /api/community` - Get community games
-- `GET /api/community/[id]` - Get specific community game
-
-## 🔐 Authentication & Security
-
-### Wallet Authentication
-- **MetaMask Integration**: Primary wallet connection method
-- **Multi-wallet Support**: Compatible with various Ethereum wallets
-- **Network Validation**: Ensures users are on supported networks
-- **Signature Verification**: Cryptographic proof of ownership
-
-### Data Security
-- **IPFS Storage**: Immutable and decentralized file storage
-- **MongoDB Encryption**: Secure database connections
-- **Environment Variables**: Sensitive data protection
-- **Input Validation**: Comprehensive request validation
-
-## 🎨 UI/UX Features
-
-### Responsive Design
-- **Mobile-First**: Optimized for mobile devices
-- **Desktop Enhancement**: Rich desktop experience
-- **Cross-Browser**: Compatible with modern browsers
-
-### Interactive Elements
-- **Real-time Preview**: Live game preview while editing
-- **Drag & Drop**: Intuitive file management
-- **Keyboard Shortcuts**: Developer-friendly shortcuts
-- **Loading States**: Smooth user feedback
-
-## 🧪 Development
-
-### Code Quality
-- **TypeScript**: Full type safety
-- **Biome**: Lightning-fast linting and formatting
-- **Ultracite**: Strict code quality enforcement
-- **Husky**: Git hooks for quality gates
-
-### Testing
-```bash
-# Lint code
-pnpm lint
-
-# Format code
-pnpm format
-
-# Fix issues automatically
-pnpm fix
-```
-
-### AI Development
-```bash
-# Start AI development server
-pnpm genkit:dev
-
-# Watch mode for AI changes
-pnpm genkit:watch
-```
-
-## 🚀 Deployment
-
-### Vercel (Recommended)
-1. Connect your GitHub repository to Vercel
-2. Configure environment variables in Vercel dashboard
-3. Deploy automatically on push to main branch
-
-### Environment Variables for Production
-```env
-MONGODB_URI=your_production_mongodb_uri
-GOOGLE_GENAI_API_KEY=your_production_google_ai_key
-OPENAI_API_KEY=your_production_openai_key
-PINATA_JWT=your_production_pinata_jwt
-NEXT_PUBLIC_APP_URL=https://your-domain.com
-```
-
-## 🗺️ Roadmap
-
-### Phase 1: Core Platform ✅
-- [x] Wallet authentication
-- [x] AI game generation
-- [x] IPFS integration
-- [x] Basic marketplace
-
-### Phase 2: Enhanced Features 🚧
-- [ ] NFT integration for game ownership
-- [ ] Advanced AI models
-- [ ] Multiplayer game support
-- [ ] Revenue sharing system
-
-### Phase 3: Ecosystem Expansion 📋
-- [ ] Mobile app
-- [ ] Game analytics dashboard
-- [ ] Developer monetization tools
-- [ ] Cross-chain compatibility
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-### Development Workflow
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
+- **Contract Address:** `0xc4eb35F9FD6C69ce1169e900ebf4862aD7444D1B`  
+- **Pyth Oracle:** `0xDd24F84d36BF92C65F92307595335bdFab5Bbd21`  
+- **Network:** Sepolia  
+- **Chain ID:** 11155111  
+- **Deployer:** `0x94455e0b14e287DC23175107974bC84A49dF4045`  
+- **Transaction Hash:** [`0xa90dff1055abbfd54e80bb6c3fc4dbaec27bbc84ce9683c9a9844d6cfaf3cca2`](https://sepolia.etherscan.io/tx/0xa90dff1055abbfd54e80bb6c3fc4dbaec27bbc84ce9683c9a9844d6cfaf3cca2) 
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT [LICENSE](LICENSE)
+
 
 ## 🙏 Acknowledgments
 
-- **Next.js Team** for the amazing framework
-- **Ethereum Foundation** for blockchain infrastructure
-- **Pinata** for IPFS storage solutions
-- **Google AI** for intelligent code generation
-- **Shadcn** for beautiful UI components
-
-## 📞 Support
-
-- **GitHub Issues**: [Report bugs and request features](https://github.com/Prathamesh-chougale-17/gamie/issues)
-- **Documentation**: [Full documentation](https://gamie-docs.vercel.app)
-- **Community**: [Join our Discord](https://discord.gg/gamie)
+* **OG Blockchain** for powering ownership
+* **Pyth Network** for on-chain randomness
+* **Pinata/IPFS** for storage
+* **Gemini AI** for game generation
+* **Rainbow Wallet** for user onboarding
 
 ---
 
-**Made with ❤️ by the Gamie Team**
+**Made with ⚡ on-chain by the OG-Lounge Team**
+
+```
