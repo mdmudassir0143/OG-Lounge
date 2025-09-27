@@ -10,6 +10,7 @@ import {
   PINATA_API_URL,
 } from "@/lib/constants";
 import { type Game, gameService } from "@/lib/game-service";
+import client from "@/lib/mongodb";
 
 // Upload game HTML to IPFS using FormData approach
 // For forked games, includes fork metadata (forked=true, forkedFrom=originalOwner)
@@ -321,18 +322,27 @@ async function createFlow({
   description,
   tags,
   walletAddress,
+  isNFT,
+  nftData,
 }: {
   html: string;
   title: string;
   description?: string;
   tags?: string[];
   walletAddress: string;
+  isNFT?: boolean;
+  nftData?: any;
 }) {
   const game = await gameService.createGame({
     walletAddress,
     title,
     description,
     tags,
+    isNFT,
+    nftData: nftData ? {
+      ...nftData,
+      mintedAt: new Date(nftData.mintedAt || Date.now())
+    } : undefined,
   });
 
   const ipfsResult = await uploadToIPFS(html, title, walletAddress);
@@ -358,7 +368,7 @@ async function createFlow({
 
 export async function POST(request: NextRequest) {
   try {
-    const { html, title, description, tags, walletAddress, gameId } =
+    const { html, title, description, tags, walletAddress, gameId, isNFT, nftData } =
       await request.json();
 
     if (!(html && title && walletAddress)) {
@@ -370,6 +380,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Ensure MongoDB connection
+    await client.connect();
 
     if (gameId) {
       return await updateFlow({
@@ -388,8 +401,11 @@ export async function POST(request: NextRequest) {
       description,
       tags,
       walletAddress,
+      isNFT,
+      nftData,
     });
   } catch (error) {
+    console.error("Save API error:", error);
     return NextResponse.json(
       {
         success: false,

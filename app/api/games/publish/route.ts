@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { gameService } from "@/lib/game-service";
+import client from "@/lib/mongodb";
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,6 +23,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Ensure MongoDB connection
+    await client.connect();
+
     let result: boolean;
     if (type === "marketplace") {
       result = await gameService.publishToMarketplace(
@@ -42,12 +46,17 @@ export async function POST(request: NextRequest) {
       published: result,
       type,
     });
-  } catch {
+  } catch (error) {
+    console.error("Publish API error:", error);
     return NextResponse.json(
       {
+        success: false,
         error: "Failed to publish game",
+        details: error instanceof Error ? error.message : "Unknown error"
       },
       { status: 500 }
     );
+  } finally {
+    await client.close();
   }
 }

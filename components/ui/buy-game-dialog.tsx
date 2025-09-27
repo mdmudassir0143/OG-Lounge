@@ -15,6 +15,8 @@ import {
 type BuyGameDialogProps = {
   gameTitle: string;
   price: number;
+  priceLabel?: string;
+  isNFT?: boolean;
   onBuy: () => Promise<void>;
   children: React.ReactNode;
 };
@@ -22,6 +24,8 @@ type BuyGameDialogProps = {
 export function BuyGameDialog({
   gameTitle,
   price,
+  priceLabel = "GEM",
+  isNFT = false,
   onBuy,
   children,
 }: BuyGameDialogProps) {
@@ -50,7 +54,7 @@ export function BuyGameDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5 text-emerald-500" />
-            Purchase Game
+            {isNFT ? "Purchase NFT Game" : "Purchase Game"}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
@@ -60,32 +64,39 @@ export function BuyGameDialog({
               <span className="font-medium text-emerald-800 text-sm dark:text-emerald-200">
                 {gameTitle}
               </span>
+              {isNFT && (
+                <div className="ml-2 rounded-full bg-blue-500 px-2 py-1 text-xs text-white">
+                  NFT
+                </div>
+              )}
             </div>
             <div className="mt-2 flex items-center gap-2">
               <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
               <span className="font-bold text-emerald-800 text-lg dark:text-emerald-200">
-                {price} GEM
+                {priceLabel === "USD" ? "$" : ""}{price} {priceLabel}
               </span>
             </div>
           </div>
 
           <div className="space-y-2">
             <p className="text-slate-600 text-sm dark:text-slate-400">
-              By purchasing this game, you will become the new owner and can:
+              {isNFT 
+                ? "By purchasing this NFT game, you will own a unique digital asset and can:"
+                : "By purchasing this game, you will become the new owner and can:"
+              }
             </p>
             <ul className="space-y-1 text-slate-600 text-sm dark:text-slate-400">
               <li>• Play the game anytime</li>
-              <li>• Modify and improve the game</li>
-              <li>• Sell the game to others</li>
-              <li>• Earn rewards from game plays</li>
+              <li>• {isNFT ? "Access encrypted game code" : "Modify and improve the game"}</li>
+              <li>• {isNFT ? "Trade as a digital collectible" : "Sell the game to others"}</li>
+              <li>• {isNFT ? "Prove ownership on blockchain" : "Earn rewards from game plays"}</li>
             </ul>
           </div>
 
           <div className="rounded-lg bg-amber-50 p-3 dark:bg-amber-950/20">
             <p className="text-amber-800 text-xs dark:text-amber-200">
               <strong>Note:</strong> This purchase will transfer ownership of
-              the game to you. The transaction will be processed on the GEMrand
-              blockchain.
+              the {isNFT ? "NFT " : ""}game to you. The transaction will be processed on the {isNFT ? "Ethereum" : "GEMrand"} blockchain.
             </p>
           </div>
         </div>
@@ -103,7 +114,7 @@ export function BuyGameDialog({
             onClick={handleBuy}
           >
             <CreditCard className="mr-2 h-4 w-4" />
-            {isBuying ? "Processing..." : `Buy for ${price} GEM`}
+            {isBuying ? "Processing..." : `Buy for ${priceLabel === "USD" ? "$" : ""}${price} ${priceLabel}`}
           </Button>
         </DialogFooter>
       </DialogContent>

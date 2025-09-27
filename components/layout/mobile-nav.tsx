@@ -6,8 +6,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { EthereumChainDropdown } from "../wallet/chain-dropdown";
-import { EthereumConnectButton } from "../wallet/connect-button";
+import { MobileConnectButton } from "../wallet/mobile-connect-button";
 
 type NavItem = {
   title: string;
@@ -58,8 +57,7 @@ export function MobileNav({ navItems }: MobileNavProps) {
                 Wallet
               </div>
               <div className="space-y-3">
-                <EthereumChainDropdown />
-                <EthereumConnectButton />
+                <MobileConnectButton />
               </div>
             </div>
           </div>

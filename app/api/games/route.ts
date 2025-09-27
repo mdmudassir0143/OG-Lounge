@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { gameService } from "@/lib/game-service";
+import client from "@/lib/mongodb";
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,15 +14,23 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Ensure MongoDB connection
+    await client.connect();
+
     const games = await gameService.getGamesByWallet(walletAddress);
 
     return NextResponse.json({
       success: true,
       games,
     });
-  } catch {
+  } catch (error) {
+    console.error("Games API error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch games" },
+      { 
+        success: false,
+        error: "Failed to fetch games",
+        details: error instanceof Error ? error.message : "Unknown error"
+      },
       { status: 500 }
     );
   }

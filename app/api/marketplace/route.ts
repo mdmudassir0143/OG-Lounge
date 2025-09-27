@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { type Game, gameService } from "@/lib/game-service";
+import client from "@/lib/mongodb";
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,6 +10,9 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search");
 
     const skip = (page - 1) * limit;
+
+    // Ensure MongoDB connection
+    await client.connect();
 
     let games: Game[] = [];
     if (search) {
@@ -23,9 +27,14 @@ export async function GET(request: NextRequest) {
       page,
       limit,
     });
-  } catch {
+  } catch (error) {
+    console.error("Marketplace API error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch marketplace games" },
+      { 
+        success: false,
+        error: "Failed to fetch marketplace games",
+        details: error instanceof Error ? error.message : "Unknown error"
+      },
       { status: 500 }
     );
   }

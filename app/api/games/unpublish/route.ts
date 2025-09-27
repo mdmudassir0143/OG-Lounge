@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { gameService } from "@/lib/game-service";
+import client from "@/lib/mongodb";
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,6 +20,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Ensure MongoDB connection
+    await client.connect();
+
     // Only allow owner to unpublish
     const game = await gameService.getGameById(gameId);
     if (!game || game.walletAddress !== walletAddress) {
@@ -28,28 +32,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Use gameService for consistent database operations
     if (type === "marketplace") {
-      await (await import("@/lib/mongodb")).default
-        .db("game-hub")
-        .collection("games")
-        .updateOne(
-          { gameId },
-          { $set: { isPublishedToMarketplace: false, updatedAt: new Date() } }
-        );
+      await gameService.updateGame(gameId, { 
+        isPublishedToMarketplace: false,
+        marketplacePublishedAt: undefined 
+      });
     } else {
-      await (await import("@/lib/mongodb")).default
-        .db("game-hub")
-        .collection("games")
-        .updateOne(
-          { gameId },
-          { $set: { isPublishedToCommunity: false, updatedAt: new Date() } }
-        );
+      await gameService.updateGame(gameId, { 
+        isPublishedToCommunity: false,
+        communityPublishedAt: undefined 
+      });
     }
 
     return NextResponse.json({ success: true, type });
   } catch (error) {
+    console.error("Unpublish API error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to unpublish" },
+      { 
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to unpublish" 
+      },
       { status: 500 }
     );
   }

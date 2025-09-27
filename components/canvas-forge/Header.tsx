@@ -3,6 +3,7 @@ import {
   Code,
   Edit,
   Save,
+  Shield,
   ShoppingCart,
   Store,
   XCircle,
@@ -11,6 +12,7 @@ import {
 import React from "react";
 import type { GenerateGameCodeOutput } from "@/ai/flows/generate-game-code-ai-sdk";
 import { Button } from "@/components/ui/button";
+import { getNFTExplorerUrl, getCurrentChainId, getContractAddress } from "@/lib/contracts";
 import {
   Dialog,
   DialogContent,
@@ -21,12 +23,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { GameGeneratorDialog } from "./GameGeneratorDialog";
-import { OwnershipFeeDialog } from "./ownership-fee-dialog";
 import { SellGameDialog } from "./sell-game-dialog";
+import { EncryptedGameNFTDialog } from "./EncryptedGameNFTDialog-v2";
 
 type HeaderProps = {
   onGenerate: (output: GenerateGameCodeOutput) => void;
-  onSave?: () => void;
   onPublishMarketplace?: () => void;
   onSellGame?: (price: number) => Promise<void>;
   onRemoveFromSale?: () => Promise<void>;
@@ -34,7 +35,6 @@ type HeaderProps = {
   isGameGenerated: boolean;
   showPublishButtons?: boolean;
   showSellButton?: boolean;
-  isSaving?: boolean;
   title?: string;
   gameId?: string;
   currentGamePrice?: number;
@@ -42,11 +42,14 @@ type HeaderProps = {
   onTitleChange?: (title: string) => void;
   isPublishedToMarketplace?: boolean;
   onUnpublish?: (type: "marketplace") => Promise<void> | void;
+  onEncryptedNFTSuccess?: (tokenId: string, gameId?: string) => void;
+  isNFTSaved?: boolean;
+  nftTokenId?: string;
+  nftContractAddress?: string;
 };
 
 export function Header({
   onGenerate,
-  onSave,
   onPublishMarketplace,
   onSellGame,
   onRemoveFromSale,
@@ -54,7 +57,6 @@ export function Header({
   isGameGenerated,
   showPublishButtons = false,
   showSellButton = false,
-  isSaving = false,
   title,
   gameId,
   currentGamePrice,
@@ -62,6 +64,10 @@ export function Header({
   onTitleChange,
   isPublishedToMarketplace = false,
   onUnpublish,
+  onEncryptedNFTSuccess,
+  isNFTSaved = false,
+  nftTokenId,
+  nftContractAddress = '0xC08F8713412CD1097DbaFb284dFB856E634712C6',
 }: HeaderProps) {
   const [editing, setEditing] = React.useState(false);
   const [mcpDialogOpen, setMcpDialogOpen] = React.useState(false);
@@ -102,14 +108,16 @@ export function Header({
               <h1 className="bg-gradient-to-r from-white to-slate-300 bg-clip-text font-bold text-2xl text-transparent text-white tracking-tighter">
                 {title || "CanvasForge"}
               </h1>
-              <Button
-                className="text-slate-400 hover:bg-slate-700/50 hover:text-white"
-                onClick={() => setEditing(true)}
-                size="sm"
-                variant="ghost"
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
+              {!isNFTSaved && (
+                <Button
+                  className="text-slate-400 hover:bg-slate-700/50 hover:text-white"
+                  onClick={() => setEditing(true)}
+                  size="sm"
+                  variant="ghost"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+              )}
             </>
           )}
         </div>
@@ -126,21 +134,41 @@ export function Header({
           </Button>
         </GameGeneratorDialog>
 
-        {/* Save Button with Ownership Fee Dialog */}
-        {onSave && (
-          <OwnershipFeeDialog isSaving={isSaving} onSave={onSave}>
-            <Button
-              className="bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg transition-all duration-200 hover:from-green-700 hover:to-emerald-700 hover:shadow-xl"
-              disabled={isSaving}
-            >
-              <Save className="mr-2 h-4 w-4" />
-              {isSaving ? "Saving..." : "Save"}
-            </Button>
-          </OwnershipFeeDialog>
+        {/* Encrypted NFT Dialog - Only show if NFT not saved yet */}
+        {isGameGenerated && html && !isNFTSaved && (
+          <EncryptedGameNFTDialog
+            gameCode={html}
+            gameTitle={title || 'Untitled Game'}
+            onSuccess={onEncryptedNFTSuccess}
+          />
         )}
 
-        {/* Sell Game Button */}
-        {showSellButton && onSellGame && gameId && title && (
+        {/* NFT Link Button - Show after NFT is saved */}
+        {isNFTSaved && nftTokenId && (
+          <Button 
+            className="gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg transition-all duration-200 hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl"
+            onClick={() => {
+              const chainId = getCurrentChainId();
+              const contractAddress = getContractAddress(chainId, "EncryptedGameNFT");
+              const explorerUrl = getNFTExplorerUrl(chainId, contractAddress, nftTokenId);
+              
+              if (explorerUrl) {
+                window.open(explorerUrl, '_blank');
+              } else {
+                // Fallback for local networks or if explorer URL is not available
+                console.log(`NFT Contract: ${contractAddress}, Token ID: ${nftTokenId}`);
+              }
+            }}
+          >
+            <Shield className="mr-2 h-4 w-4" />
+            View NFT
+          </Button>
+        )}
+
+
+
+        {/* Sell Game Button - Only show for regular saved games, not NFTs */}
+        {showSellButton && onSellGame && gameId && title && !isNFTSaved && (
           <SellGameDialog
             currentPrice={currentGamePrice}
             gameId={gameId}

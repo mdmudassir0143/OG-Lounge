@@ -96,7 +96,7 @@ export default function MarketplacePage() {
     setPage(1);
   };
 
-  const handleBuyGame = async (gameId: string, price: number) => {
+  const handleBuyGame = async (gameId: string, usdPrice: number, ethAmount: string, transactionHash: string) => {
     if (!activeAddress) {
       toast.error("Please connect your wallet to purchase games");
       return;
@@ -111,25 +111,30 @@ export default function MarketplacePage() {
         body: JSON.stringify({
           gameId,
           buyerAddress: activeAddress,
-          price,
+          usdPrice,
+          ethAmount,
+          transactionHash,
         }),
       });
 
       const result = await response.json();
 
       if (result.success) {
-        toast.success("Game purchased successfully!", {
-          description: "You are now the owner of this game",
+        toast.success("🎉 Game purchased successfully with ETH!", {
+          description: `Ownership transferred! Payment of ${result.transaction.ethAmount} ETH sent to seller on blockchain.`,
         });
-        // Reload the games list to update ownership
-        window.location.reload();
+        
+        // Reload the games list to update ownership and remove from marketplace if needed
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
       } else {
         throw new Error(result.error || "Failed to purchase game");
       }
     } catch (error) {
-      toast.error("Failed to purchase game", {
+      toast.error("Failed to update purchase in database", {
         description:
-          error instanceof Error ? error.message : "Please try again later.",
+          error instanceof Error ? error.message : "Please contact support.",
       });
       throw error; // Re-throw to let the dialog handle it
     }

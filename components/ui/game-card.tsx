@@ -15,12 +15,12 @@ import Link from "next/link";
 import { MagicCard } from "@/components/magicui/magic-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BuyGameDialog } from "@/components/ui/buy-game-dialog";
+import { EthBuyGameDialog } from "@/components/ui/eth-buy-game-dialog";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import QrShare from "@/components/ui/qr-share";
 import { PythPricingDialog } from "@/components/pyth/PythPricingDialog";
 import { POPULAR_FORK_THRESHOLD } from "@/lib/constants";
-import { GAME_MARKETPLACE_ADDRESS } from "@/lib/contracts";
+import { CONTRACT_ADDRESSES } from "@/lib/contracts";
 import type { Game } from "@/lib/game-service";
 
 type GameCardProps = {
@@ -28,7 +28,7 @@ type GameCardProps = {
   variant?: "editor" | "marketplace";
   onDelete?: (gameId: string) => void;
   onShare?: (gameId: string) => void;
-  onBuy?: (gameId: string, price: number) => Promise<void>;
+  onBuy?: (gameId: string, usdPrice: number, ethAmount: string, transactionHash: string) => Promise<void>;
   currentUserAddress?: string;
 };
 
@@ -165,9 +165,14 @@ function StatsSection({
     );
   }
 
+  // Show price if available
+  const hasPrice = (game.isForSale && game.salePrice) || (game.isNFT && game.nftData?.priceUSD);
+  const gamePrice = game.isForSale ? game.salePrice : game.nftData?.priceUSD;
+  const priceLabel = game.isForSale ? "GEM" : "USD";
+
   return (
     <div className="px-6 py-4">
-      <div className="grid grid-cols-3 gap-4">
+      <div className={`grid gap-4 ${hasPrice ? 'grid-cols-4' : 'grid-cols-3'}`}>
         <div className="flex items-center gap-2 rounded-lg bg-slate-100/50 p-2 dark:bg-slate-800/50">
           <User className="h-4 w-4 text-emerald-500" />
           <span className="font-medium text-sm">
@@ -186,6 +191,14 @@ function StatsSection({
             {formatDate(game.marketplacePublishedAt || game.createdAt)}
           </span>
         </div>
+        {hasPrice && (
+          <div className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-100 to-indigo-100 p-2 dark:from-blue-900/20 dark:to-indigo-900/20">
+            <CreditCard className="h-4 w-4 text-blue-600" />
+            <span className="font-bold text-blue-700 text-sm dark:text-blue-300">
+              ${gamePrice} USD
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -203,7 +216,7 @@ function ActionsSection({
   game: Game;
   onDelete?: (gameId: string) => void;
   onShare?: (gameId: string) => void;
-  onBuy?: (gameId: string, price: number) => Promise<void>;
+  onBuy?: (gameId: string, usdPrice: number, ethAmount: string, transactionHash: string) => Promise<void>;
   currentUserAddress?: string;
 }) {
   if (variant === "editor") {
@@ -247,8 +260,16 @@ function ActionsSection({
     );
   }
 
-  // If game is for sale and user can buy, show buy dialog
-  if (game.isForSale && game.salePrice && onBuy && currentUserAddress) {
+  // Check if game has a price (either regular sale or NFT)
+  const hasPrice = (game.isForSale && game.salePrice) || (game.isNFT && game.nftData?.priceUSD);
+  const gamePrice = game.isForSale ? game.salePrice : game.nftData?.priceUSD;
+  const priceLabel = game.isForSale ? "GEM" : "USD";
+
+  // Check if current user is the owner of the game
+  const isOwner = currentUserAddress && currentUserAddress === game.walletAddress;
+
+  // If game has a price and user can buy (but not the owner), show buy dialog
+  if (hasPrice && gamePrice && onBuy && currentUserAddress && !isOwner) {
     return (
       <>
         <Link className="flex-1" href={`/marketplace/${game.gameId}`}>
@@ -263,15 +284,25 @@ function ActionsSection({
           </Button>
         </Link>
 
-        {/* Pyth Pricing Dialog */}
+        {/* Buy Now Dialog with ETH Payment */}
         <div className="flex-1">
-          <PythPricingDialog
+          <EthBuyGameDialog
             gameId={game.gameId}
-            basePriceUSD={(game.salePrice ?? 1) * 100} // Convert GEM to USD cents
-            contractAddress={GAME_MARKETPLACE_ADDRESS}
-            onPurchaseComplete={() => onBuy?.(game.gameId, game.salePrice ?? 0)}
             gameTitle={game.title}
-          />
+            usdPrice={gamePrice}
+            blockchainGameId={game.blockchainGameId}
+            isNFT={game.isNFT}
+            onBuy={(usdPrice, ethAmount, transactionHash) => onBuy(game.gameId, usdPrice, ethAmount, transactionHash)}
+          >
+            <Button
+              className="w-full gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg transition-all duration-200 hover:scale-[1.02] hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl"
+              size="sm"
+              type="button"
+            >
+              <CreditCard className="h-4 w-4" />
+              Buy with ETH
+            </Button>
+          </EthBuyGameDialog>
         </div>
 
         {onShare && (
